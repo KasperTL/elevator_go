@@ -1,0 +1,32 @@
+@startuml Heis 
+class OrderHandler {
+    -orderArray
+    +addOrder()
+} 
+class Order {
+    -floor 
+    -direction
+    +setFloor()
+    +setSirection()
+    +getFloor()
+    +getDirection()
+}
+class Elevator {
+    -lastFloor
+    -state
+    -door
+    +setState()
+    +drive()
+    +stop()
+    +wait()
+}
+class Input {
+    -inputs 
+    +getFloor()
+    +getButton()
+}
+class elevatorState {
+    -motorVolatage
+}
+Elevator --> Order : "Has a"
+@enduml

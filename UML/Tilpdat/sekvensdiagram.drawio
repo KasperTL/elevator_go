@@ -1,0 +1,62 @@
+<mxfile host="65bd71144e">
+    <diagram id="Tu6mwaypg6e-1vJfyjWM" name="Page-1">
+        <mxGraphModel dx="943" dy="674" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="2" value="" style="shape=umlLifeline;participant=umlActor;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;verticalAlign=top;spacingTop=36;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="90" y="120" width="20" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="Button" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="170" y="110" width="100" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" vertex="1" parent="3">
+                    <mxGeometry x="45" y="120" width="10" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="Order" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="325" y="110" width="100" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="Order handler" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="470" y="110" width="100" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" vertex="1" parent="5">
+                    <mxGeometry x="45" y="210" width="10" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="6" value="Elevetor" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;html=1;container=1;collapsible=0;recursiveResize=0;outlineConnect=0;" vertex="1" parent="1">
+                    <mxGeometry x="620" y="110" width="100" height="300" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="Push button" style="html=1;verticalAlign=bottom;startArrow=oval;endArrow=block;startSize=8;" edge="1" target="8" parent="1" source="2">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="100" y="270" as="sourcePoint"/>
+                        <Array as="points">
+                            <mxPoint x="140" y="230"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="16" value="Order" style="html=1;verticalAlign=bottom;startArrow=none;endArrow=block;startSize=8;" edge="1" target="15" parent="1" source="11">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="455" y="320" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="11" value="" style="html=1;points=[];perimeter=orthogonalPerimeter;" vertex="1" parent="1">
+                    <mxGeometry x="370" y="290" width="10" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" style="edgeStyle=none;html=1;" edge="1" parent="1" source="11" target="4">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="" style="html=1;verticalAlign=bottom;startArrow=oval;endArrow=none;startSize=8;" edge="1" parent="1" source="4" target="11">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="374.5" y="320" as="sourcePoint"/>
+                        <mxPoint x="515" y="320" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="18" value="Activate order" style="html=1;verticalAlign=bottom;endArrow=block;" edge="1" parent="1">
+                    <mxGeometry width="80" relative="1" as="geometry">
+                        <mxPoint x="220" y="290" as="sourcePoint"/>
+                        <mxPoint x="370" y="290" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
