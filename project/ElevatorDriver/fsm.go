@@ -30,8 +30,6 @@ func fsm_onNewOrderRequest(e *Elevator, btn_floor int, btn_type int) {
 	case EB_Idle:
 		e.requests[btn_floor][btn_type] = true
 		
-		setAllLights(e)
-
 		newDirection, newBehaviour := requests_chooseDirection(e)
 		
 		e.direction = newDirection
@@ -40,8 +38,18 @@ func fsm_onNewOrderRequest(e *Elevator, btn_floor int, btn_type int) {
 		switch e.behaviour {
 		case EB_DoorOpen:
 			elevio.SetDoorOpenLamp(1)
-			
-		
+			TimerStart(3)
+			elevio.SetDoorOpenLamp(0)
+			e = requests_clearAtCurrentFloor(e)
+		case EB_Moving:
+			elevio.SetMotorDirection(e.direction)
+		}
+	case EB_Moving:
+		e.requests[btn_floor][btn_type] = true
+	case EB_DoorOpen:
+		swi
+		e.requests[btn_floor][btn_type] = true
+	}	
 }
 
 

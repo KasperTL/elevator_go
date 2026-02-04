@@ -55,8 +55,7 @@ func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 		}
 	case D_Stop:
 		if request_here(e) {
-			return D_Stop, EB_Do
-func request_below(e Elevator) int {orOpen
+			return D_Stop, EB_DoorOpen
 		} else if request_above(e) {
 			return D_Up, EB_Moving
 		} else if request_below(e) {
@@ -86,13 +85,12 @@ func requests_shouldStop(e Elevator) int {
 	}
 }
 
-func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type Button) int {
-	return
-		(e.florr == btn_floor) &&
+func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type Button) bool {
+	return (e.floor == btn_floor) &&
 		(
-			(e.dirn == D_Up && btn_type == B_HallUp) ||
-			(e.dirn == D_Down && btn_type == B_HallDown) ||
-			(e.dirn == D_Stop) ||
+			(e.direction == ED_Up && btn_type == B_HallUp) ||
+			(e.direction == ED_Down && btn_type == B_HallDown) ||
+			(e.direction == ED_Stop) ||
 			(btn_type == B_Cab)
 		)
 }
