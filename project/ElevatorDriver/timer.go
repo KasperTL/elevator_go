@@ -1,4 +1,4 @@
-package elev_algo
+package ElevatorDriver
 import "time"
 
 var timerEndTime time.Time

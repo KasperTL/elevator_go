@@ -1,5 +1,5 @@
 
-package elev_algo
+package ElevatorDriver
 
 func setAllLights(e Elevator) {
 	for floor := 0; floor < N_FLOORS; floor++ {
