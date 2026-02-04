@@ -1,24 +1,22 @@
 package ElevatorDriver
-import "time"
+
+import (
+	"time"
+)
 
 var timerEndTime time.Time
-var timerActive int
+var timerActive bool
 
-func get_wall_time() float64 {
-	return float64(time.Now().UnixNano()) / 1e9
+func TimerStart(duration float64) {
+	timerEndTime = time.Now().Add(time.Duration(duration * float64(time.Second)))
+	timerActive = true
 }
 
-func timer_start(duration float64) {
-	timerEndTime = get_wal
-	timerActive = 1
+func TimerStop() {
+	timerActive = false
 }
 
-func timer_stop() {
-	timerActive = 0	
+func TimerTimedOut() bool {
+	return timerActive && time.Now().After(timerEndTime)
 }
-
-func timer_expired() int {
-	return (timerActive && get_wall_time() > timerEndTime)
-}
-
 
