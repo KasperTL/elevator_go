@@ -1,8 +1,8 @@
 package ElevatorDriver
 
 func request_above(e Elevator) int {
-	for (floor := e.floor +1; floor < N_FLOORS; floor++) {
-		for (button := 0; button < N_BUTTONS; button++) {
+	for floor := e.floor +1; floor < N_FLOORS; floor++ {
+		for button := 0; button < N_BUTTONS; button++ {
 			if (e.requests[floor][button]) {
 				return 1
 			}
@@ -12,8 +12,8 @@ func request_above(e Elevator) int {
 }
 
 func request_below(e Elevator) int {
-	for (floor := 0; floor < e.floor; floor++) {
-		for (button := 0; button < N_BUTTONS; button++) {
+	for floor := 0; floor < e.floor; floor++ {
+		for button := 0; button < N_BUTTONS; button++ {
 			if (e.requests[floor][button]) {
 				return 1
 			}
@@ -23,7 +23,7 @@ func request_below(e Elevator) int {
 }
 
 func request_here(e Elevator) int {
-	for (button := 0; button < N_BUTTONS; button++) {
+	for button := 0; button < N_BUTTONS; button++ {
 		if (e.requests[e.floor][button]) {
 			return 1
 		}
@@ -35,36 +35,37 @@ func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 	switch e.dirn {
 	case D_Up:
 		if request_above(e) {
-			return DirnBehaviourPair(D_Up, EB_Moving)
+			return D_Up, EB_Moving
 		} else if request_here(e) {
-			return DirnBehaviourPair(D_Down, EB_DoorOpen)
+			return D_Down, EB_DoorOpen
 		} else if request_below(e) {
-			return DirnBehaviourPair(D_Down, EB_Moving)
+			return D_Down, EB_Moving
 		} else {
-			return DirnBehaviourPair(D_Stop, EB_Idle)
+			return D_Stop, EB_Idle
 		}
 	case D_Down:
 		if request_below(e) {
-			return DirnBehaviourPair(D_Down, EB_Moving)
+			return D_Down, EB_Moving
 		} else if request_here(e) {
-			return DirnBehaviourPair(D_Up, EB_DoorOpen)
+			return D_Up, EB_DoorOpen
 		} else if request_above(e) {
-			return DirnBehaviourPair(D_Up, EB_Moving)
+			return D_Up, EB_Moving
 		} else {
-			return DirnBehaviourPair(D_Stop, EB_Idle)
+			return D_Stop, EB_Idle
 		}
 	case D_Stop:
 		if request_here(e) {
-			return DirnBehaviourPair(D_Stop, EB_DoorOpen)
+			return D_Stop, EB_Do
+func request_below(e Elevator) int {orOpen
 		} else if request_above(e) {
-			return DirnBehaviourPair(D_Up, EB_Moving)
+			return D_Up, EB_Moving
 		} else if request_below(e) {
-			return DirnBehaviourPair(D_Down, EB_Moving)
+			return D_Down, EB_Moving
 		} else {
-			return DirnBehaviourPair(D_Stop, EB_Idle)
+			return D_Stop, EB_Idle
 		}
 	default:
-		return DirnBehaviourPair(D_Stop, EB_Idle)
+		return D_Stop, EB_Idle
 	}
 }
 

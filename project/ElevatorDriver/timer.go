@@ -9,7 +9,7 @@ func get_wall_time() float64 {
 }
 
 func timer_start(duration float64) {
-	timerEndTime = get_wall_time() + duration
+	timerEndTime = get_wal
 	timerActive = 1
 }
 

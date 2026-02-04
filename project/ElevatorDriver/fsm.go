@@ -1,54 +1,47 @@
 
 package ElevatorDriver
 
+import (
+	"../elevio"
+)
+
+
+//This will be moved to Orders module later
 func setAllLights(e Elevator) {
 	for floor := 0; floor < N_FLOORS; floor++ {
 		for button := 0; button < N_BUTTONS; button++ {
-			elevator_requestButtonLight(floor, button, e.requests[floor][button])
+			elevio.SetButtonLamp(button, floor, e.requests[floor][button])
 		}
 	}
 }
 
+
+
 func fsm_onInitBetweenFloors(e Elevator) {
-	elevator_motorDirection(D_Down)
+	SetMotorDirection(D_Down)
 	e.dirn = D_Down
 	e.behaviour = EB_Moving
 } 
 
-func fsm_onRequestButtonPress(e *Elevator, btn_floor int, btn_type int) {
-	print("\n\n%s(%d, %s)\n", __FUNCTION__, btn_floor, elevator_buttonToString(btn_type))
-	elevator_print(e)
 
-	switch(e.behaviour) {
-	case EB_DoorOpen:
-		if(requests_shouldClearImmediately(e, btn_floor, btn_type)) {:
-			timer_start(e.config.doorOpenDuration_s)
-		} else {
-			e.requests[btn_floor][btn_type] = 1
-		}
-		
-	case EB_Moving:
-		e.requests[btn_floor][btn_type] = 1
-		
+//We will change the input values. floor and button type will be an Order struct later
+func fsm_onNewOrderRequest(e *Elevator, btn_floor int, btn_type int) {
+	switch e.behaviour {
 	case EB_Idle:
-		e.requests[btn_floor][btn_type] = 1
-		DirnBehaviourPair pair := requests_chooseDirection(e)
-		e.dirn = pair.dirn
-		e.behaviour = pair.behaviour
-		switch(e.behaviour) {
+		e.requests[btn_floor][btn_type] = true
+		
+		setAllLights(e)
+
+		newDirection, newBehaviour := requests_chooseDirection(e)
+		
+		e.direction = newDirection
+		e.behaviour = newBehaviour
+
+		switch e.behaviour {
 		case EB_DoorOpen:
-			elevator_doorLight(1)
-			timer_start(e.config.doorOpenDuration_s)
-			e = requests_clearAtCurrentFloor(e)
-		case EB_Moving:
-			elevator_motorDirection(e.dirn)
-		}
-	case EB_Idle:
-	}
-	setAllLights(e)
-
-	print("\nNew state:\n")
-	elevator_print(e)
+			elevio.SetDoorOpenLamp(1)
+			
+		
 }
 
 
