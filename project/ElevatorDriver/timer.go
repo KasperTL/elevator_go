@@ -20,4 +20,3 @@ func TimerStop() {
 func TimerTimedOut() bool {
 	return timerActive && time.Now().After(timerEndTime)
 }
-
