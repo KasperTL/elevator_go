@@ -24,25 +24,22 @@ func WordlView_broadcast(tx <- chan WorldView.WorldView, port int) error {
     defer HeartbeatTimer.Stop()
 
     var last WorldView.WorldView
-    hasState := false
+
 
     for {
         select {
 
         case view := <-tx:
             last = view
-            hasState = true
 
         case <-HeartbeatTimer.C:
-            if hasState {
-                data, err := json.Marshal(last)
+            data, err := json.Marshal(last)
     		if err != nil {
         		continue
     		}
     		conn.Write(data)
             }
         }
-    }
 }
 
 
