@@ -2,25 +2,20 @@
 package ElevatorDriver
 import (
 	"fmt"
+    "project/config"
 )
-
-// This is just for development purposes
-// In the real system, these constants and types would be provided by the config file
-const N_FLOORS = 4
-const N_BUTTONS = 3
 
 type ElevatorDirection int 
 const (
 	ED_Up = 1
-	ED_Stop = 0
-	ED_Down = -1
+	ED_Down = 2
 )
 
 type ElevatorBehaviour int 
 const (
-	EB_Moving = 0
-	EB_Idle = 1
-	EB_DoorOpen = 2
+	EB_Idle = 0
+	EB_DoorOpen = 1
+    EB_Moving = 2
 )
 
 
@@ -28,17 +23,30 @@ const (
 type Elevator struct {
 	floor int
 	direction ElevatorDirection
-	requests [N_FLOORS][N_BUTTONS] bool
+	requests Orders  // NumButtons is BT_HallDown, BT_HallUp and BT_Cab
 	behaviour ElevatorBehaviour
+    obstruction bool
 }
 
 
 
+
+func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
+    switch dir {
+    case ED_Up:
+        return ED_Down
+    case ED_Down:
+        return ED_Up
+    default:
+        panic("Invalid direction")
+    }
+}
+
+// Look ower erikIsChamp, they have a clean solution in elevatorFsm.go func ToString(). Same for StateToString()
 func DirnToString(ed ElevatorDirection) string {
 	switch ed {
 	case ED_Up: return "Up"
 	case ED_Down: return "Down"
-	case ED_Stop: return "Stop"
 	default: return "Unknown"
 	}
 } 
@@ -64,9 +72,9 @@ func ElevatorPrint(e Elevator) {
     fmt.Printf("  +--------------------+\n")
     fmt.Printf("  |  Up  | Down |  Cab |\n")
 
-    for f := N_FLOORS - 1; f >= 0; f-- {
+    for f := config.NumFloors - 1; f >= 0; f-- {
         fmt.Printf("  |")
-        for b := 0; b < N_BUTTONS; b++ {
+        for b := 0; b < config.NumButtons; b++ {
             if e.requests[f][b] {
                 fmt.Printf("  #   ")
             } else {
@@ -83,9 +91,9 @@ func ElevatorPrint(e Elevator) {
 func InitializeElevator() Elevator {
 	return Elevator{
 		floor: -1,
-		direction: ED_Stop,
+		direction: ED_Down,
 		behaviour: EB_Idle,
-		requests: [N_FLOORS][N_BUTTONS] bool{},
+		requests: [config.NumFloors][config.NumButtons] bool{},
 	}
 }
 

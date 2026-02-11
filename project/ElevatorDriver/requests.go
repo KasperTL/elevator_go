@@ -1,8 +1,60 @@
 package ElevatorDriver
 
+import (
+	"project/config"
+	"project/elevio"
+)
+
+
+type Orders [config.NumFloors][config.NumButtons] bool
+
+
+func (o Orders) orderInSameDirection(dir ElevatorDirection) bool {
+
+	switch dir {
+	case ED_Up:
+		for floor := e.floor + 1; floor < config.NumFloors; floor++ {
+			for button := 0; button < config.NumButtons; button++ {
+				if o[floor][button] {
+					return true
+				}
+			}
+		}
+		return false
+	case ED_Down:
+		for floor := 0; floor < e.floor; floor++ {
+			for button := 0; button < config.NumButtons; button++ {
+				if o[floor][button] {
+					return true
+				}
+			}
+		}
+		return false
+	default:
+		panic("Invalid elevator direction")
+	}
+}
+
+
+
+
+
+func orderDone(e Elevator, floor int, direction direction, orderDoneC chan <- elevio.ButtonEvent) {
+	if e.requests[floor][BT_Cab] {
+		e.requests[floor][BT_Cab] = false
+		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: BT_Cab}
+	}
+	if e.requests[floor][direction] {
+		e.requests[floor][direction] = false
+		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: direction}
+	}
+}
+
+
+//This should be written as an switch case, not seperate functions
 func request_above(e Elevator) int {
-	for floor := e.floor +1; floor < N_FLOORS; floor++ {
-		for button := 0; button < N_BUTTONS; button++ {
+	for floor := e.floor +1; floor < config.NumFloors; floor++ {
+		for button := 0; button < config.NumButtons; button++ {
 			if (e.requests[floor][button]) {
 				return 1
 			}
@@ -13,7 +65,7 @@ func request_above(e Elevator) int {
 
 func request_below(e Elevator) int {
 	for floor := 0; floor < e.floor; floor++ {
-		for button := 0; button < N_BUTTONS; button++ {
+		for button := 0; button < config.NumButtons; button++ {
 			if (e.requests[floor][button]) {
 				return 1
 			}
@@ -23,7 +75,7 @@ func request_below(e Elevator) int {
 }
 
 func request_here(e Elevator) int {
-	for button := 0; button < N_BUTTONS; button++ {
+	for button := 0; button < config.NumButtons; button++ {
 		if (e.requests[e.floor][button]) {
 			return 1
 		}
@@ -32,54 +84,43 @@ func request_here(e Elevator) int {
 }
 
 func requests_chooseDirection(e Elevator) DirnBehaviourPair {
-	switch e.dirn {
-	case D_Up:
+	switch e.direction {
+	case ED_Up:
 		if request_above(e) {
-			return D_Up, EB_Moving
+			return ED_Up, EB_Moving
 		} else if request_here(e) {
-			return D_Down, EB_DoorOpen
+			return ED_Down, EB_DoorOpen
 		} else if request_below(e) {
-			return D_Down, EB_Moving
+			return ED_Down, EB_Moving
 		} else {
-			return D_Stop, EB_Idle
+			return EB_Idle
 		}
-	case D_Down:
+	case ED_Down:
 		if request_below(e) {
-			return D_Down, EB_Moving
+			return ED_Down, EB_Moving
 		} else if request_here(e) {
-			return D_Up, EB_DoorOpen
+			return ED_Up, EB_DoorOpen
 		} else if request_above(e) {
-			return D_Up, EB_Moving
+			return ED_Up, EB_Moving
 		} else {
-			return D_Stop, EB_Idle
+			return EB_Idle
 		}
-	case D_Stop:
-		if request_here(e) {
-			return D_Stop, EB_DoorOpen
-		} else if request_above(e) {
-			return D_Up, EB_Moving
-		} else if request_below(e) {
-			return D_Down, EB_Moving
-		} else {
-			return D_Stop, EB_Idle
-		}
+
 	default:
-		return D_Stop, EB_Idle
+		return EB_Idle
 	}
 }
 
 func requests_shouldStop(e Elevator) int {
-	switch e.dirn {
-	case D_Down:
-		return e.requests[e.floor][B_Hallown] ||
-		e.requests[e.floor][B_Cab] ||
+	switch e.direction {
+	case ED_Down:
+		return e.requests[e.floor][BT_HallDown] ||
+		e.requests[e.floor][BT_Cab] ||
 		!request_below(e) 
-	case D_Up:
-		return e.requests[e.floor][B_Hallup] ||
-		e.requests[e.floor][B_Cab] ||
+	case ED_Up:
+		return e.requests[e.floor][BT_HallUp] ||
+		e.requests[e.floor][BT_Cab] ||
 		!request_above(e)
-	case D_Stop:
-		return 0
 	default:
 		return 1
 	}
@@ -88,8 +129,8 @@ func requests_shouldStop(e Elevator) int {
 func requests_shouldClearImmediately(e Elevator, btn_floor int, btn_type Button) bool {
 	return (e.floor == btn_floor) &&
 		(
-			(e.direction == ED_Up && btn_type == B_HallUp) ||
-			(e.direction == ED_Down && btn_type == B_HallDown) ||
+			(e.direction == ED_Up && btn_type == BT_HallUp) ||
+			(e.direction == ED_Down && btn_type == BT_HallDown) ||
 			(e.direction == ED_Stop) ||
 			(btn_type == B_Cab)
 		)

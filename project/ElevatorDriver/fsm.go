@@ -2,14 +2,124 @@
 package ElevatorDriver
 
 import (
-	"../elevio"
+	"project/config"
+	"project/elevio"
 )
+
+
+
+
+
+func elevator_fsm(
+	newOrder	     <- chan Orders,
+	newElevator	     chan <- Elevator,
+	deliverOrder     chan <- elevio.ButtonEvent,
+) {
+
+	orderDoneC := make(chan elevio.ButtonEvent)
+	newFloorC := make(chan int)
+	elevator := InitializeElevator()
+
+	var orders Orders
+
+	for {
+		select {
+		case floor := <- newFloorC:
+			switch {
+			case EB_Moving:
+				switch {
+				case orders[floor][elevator.direction]:
+					elevator.behaviour = EB_DoorOpen
+					orderDone(elevator, floor, elevator.direction, orderDoneC)
+				
+				case orders[floor][elevio.BT_Cab] && orders.orderInSameDirection(elevator.direction):
+					elevator.behaviour = EB_DoorOpen
+					orderDone(elevator, floor, elevator.direction, orderDoneC)
+				
+				
+				}
+			}
+
+
+		case orders = <- newOrder:
+			switch newElevator.behaviour {
+			case EB_Idle:
+				switch {
+					case orders[elevator.floor][elevator.direction] || orders[elevator.floor][BT_Cab]: 
+						elevator.behaviour = EB_DoorOpen
+						orderDone(elevator, elevator.floor, elevator.direction, orderDoneC)
+					
+					case orders[elevator.floor][oppositeDirection(elevator.direction)] || orders[elevator.floor][BT_Cab]:
+						elevator.direction = EB_DoorOpen
+						orderDone(elevator, elevator.floor, oppositeDirection(elevator.direction), orderDoneC)
+
+					case orders.orderInSameDirection(elevator.direction):
+						elevator.behaviour = EB_Moving
+
+					case orders.orderInSameDirection(oppositeDirection(elevator.direction)):
+						elevator.direction = oppositeDirection(elevator.direction)
+						elevator.behaviour = EB_Moving
+
+					default:
+						elevator.behaviour = EB_Idle
+				}
+			case EB_Moving:
+				switch {
+
+				}
+				
+			}
+		}
+	}
+}
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //This will be moved to Orders module later
 func setAllLights(e Elevator) {
-	for floor := 0; floor < N_FLOORS; floor++ {
-		for button := 0; button < N_BUTTONS; button++ {
+	for floor := 0; floor < config.NumFloors; floor++ {
+		for button := 0; button < config.NumButtons; button++ {
 			elevio.SetButtonLamp(button, floor, e.requests[floor][button])
 		}
 	}
@@ -18,8 +128,8 @@ func setAllLights(e Elevator) {
 
 
 func fsm_onInitBetweenFloors(e Elevator) {
-	SetMotorDirection(D_Down)
-	e.dirn = D_Down
+	elevio.SetMotorDirection(elevio.MD_Down)
+	e.direction = ED_Down
 	e.behaviour = EB_Moving
 } 
 
