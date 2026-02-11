@@ -32,23 +32,20 @@ func WordlView_broadcast(tx <- chan WorldView.WorldView, port int) error {
         case view := <-tx:
             last = view
             hasState = true
-            send(conn, view)
 
         case <-HeartbeatTimer.C:
             if hasState {
-                send(conn, last)
+                data, err := json.Marshal(last)
+    		if err != nil {
+        		continue
+    		}
+    		conn.Write(data)
             }
         }
     }
 }
 
-func send(conn *net.UDPConn, view WorldView.WorldView) {
-    data, err := json.Marshal(view)
-    if err != nil {
-        return
-    }
-    conn.Write(data)
-}
+
 
 
 func Reciever(rx chan <- WorldView.WorldView, port int) error {
