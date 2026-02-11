@@ -16,6 +16,8 @@ func elevator_fsm(
 	deliverOrder     chan <- elevio.ButtonEvent,
 ) {
 
+	doorOpenC := make(chan bool)
+	doorClosedC := make(chan bool)
 	orderDoneC := make(chan elevio.ButtonEvent)
 	newFloorC := make(chan int)
 	elevator := InitializeElevator()
@@ -32,11 +34,9 @@ func elevator_fsm(
 					elevator.behaviour = EB_DoorOpen
 					orderDone(elevator, floor, elevator.direction, orderDoneC)
 				
-				case orders[floor][elevio.BT_Cab] && orders.orderInSameDirection(elevator.direction):
+				case orders[floor][elevio.BT_Cab]: // && orders.orderInSameDirection(elevator.direction):
 					elevator.behaviour = EB_DoorOpen
 					orderDone(elevator, floor, elevator.direction, orderDoneC)
-				
-				
 				}
 			}
 
