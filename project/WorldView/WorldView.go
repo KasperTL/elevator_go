@@ -24,7 +24,7 @@ func InitWorldView(nodeID int) WorldView {
     return view 
 }
 
-func consesus(peers []OrderState, stateA OrderState, stateB OrderState) bool {
+func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
     for _, p := range peers {
         if p != stateA || p != stateB {
             return false 
@@ -33,7 +33,7 @@ func consesus(peers []OrderState, stateA OrderState, stateB OrderState) bool {
     return true
 }
 
-func anyIs(peers []OrderState, state OrderState) bool {
+func anyPeerAhead(peers []OrderState, state OrderState) bool {
     for _, p := range peers {
         if p == state {
             return true 
@@ -42,9 +42,54 @@ func anyIs(peers []OrderState, state OrderState) bool {
     return false
 }
 
+func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
+    if peerOrderState == myOrderState {
+        return false 
+    }
+    switch myOrderState {
+    case OrderIdle:
+        return peerOrderState == OrderPending || peerOrderState == OrderConfirmed
+        
+    case OrderPending:
+        return peerOrderState == OrderConfirmed
+
+    case OrderConfirmed:
+        return peerOrderState == OrderIdle
+
+    default:
+        return false
+    }
+}
+
+func syncOnRejon( 
+    localOrders [config.NumElevators][config.NumFloors][config.NumButtons] OrderState,
+    alivePeers []int,
+) [config.NumElevators][config.NumFloors][config.NumButtons] OrderState {
+
+    if len(alivePeers) == 0 {
+        return localOrders
+    }
+
+    for elevator := 0; elevator < config.NumElevators; elevator++ {
+        for floor := 0; floor < config.NumFloors; floor++ {
+            for button := 0; button < config.NumButtons; button++ {
+
+                for peerID := range(alivePeers) {
+                    peerState := localOrders[peerID][floor][button]
+                }   
+
+                if isPeerAhead(peerState, localOrders[elevator][floor][button]) {
+                    localOrders[elevator][floor][button] = peerState
+                }
+            }
+        }
+    }
+    return localOrders
+}
 func updateHalOrders(
     orders [config.NumElevators][config.NumFloors][config.NumButtons] OrderState,
     NodeID int ,
+    alivePeers []int,
 ) [config.NumElevators][config.NumFloors][config.NumButtons] OrderState {
 
     for floor := 0; floor < config.NumFloors; floor++ {
@@ -52,25 +97,25 @@ func updateHalOrders(
             currentOrderState := orders[NodeID][floor][button]
             newOrderState := currentOrderState
 
-            var peers []OrderState
+            var peersOrderView []OrderState
 
-            for elevator := 0; elevator < config.NumElevators; elevator++ {
-                if elevator != NodeID {
-                    peers = append(peers, orders[elevator][floor][button])
+            for peerID := range(alivePeers) {
+                if peerID != NodeID {
+                    peersOrderView = append(peersOrderView, orders[peerID][floor][button])
                 }
-            }
+            }   
 
             switch currentOrderState {
             case OrderIdle:
-                if consesus(peers, OrderIdle, OrderPending) && anyIs(peers, OrderPending) {
+                if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) && anyPeerAhead(peersOrderView, OrderPending) {
                     newOrderState = OrderPending
                 }
             case OrderPending:
-                if consesus(peers, OrderPending, OrderConfirmed) && anyIs(peers, OrderConfirmed) {
+                if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) && anyPeerAhead(peersOrderView, OrderConfirmed) {
                     newOrderState = OrderConfirmed
                 }
             case OrderConfirmed:
-                if consesus(peers, OrderConfirmed, OrderIdle) && anyIs(peers, OrderIdle) {
+                if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView) {
                     newOrderState = OrderIdle
                 }
             }
@@ -79,5 +124,14 @@ func updateHalOrders(
     }
     return orders
 }
+
+func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldView) WorldView {
+    myWorldView.ElevatorStates[peerWorldView.SenderID] 	= peerWorldView.ElevatorStates[peerWorldView.SenderID]
+	myWorldView.AliveList[peerWorldView.SenderID] 		= peerWorldView.AliveList[peerWorldView.SenderID]
+	myWorldView.Orders[peerWorldView.SenderID] 			= peerWorldView.Orders[peerWorldView.SenderID]
+
+    return myWorldView
+}
+
 
  
