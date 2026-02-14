@@ -3,15 +3,14 @@ package Network
 import (
 	"encoding/json"
 	"net"
-	"time"
-	"project/config"
 	"project/WorldView"
+	"project/config"
+	"time"
 )
 
 const bufsize = config.Buffer
 
-
-func WordlView_broadcast(tx <- chan WorldView.WorldView, port int) error {
+func WordlView_broadcast(tx <-chan WorldView.WorldView, port int) error {
 	conn, err := net.DialUDP("udp4", nil, &net.UDPAddr{IP: net.IPv4bcast, Port: port})
 
 	if err != nil {
@@ -20,42 +19,38 @@ func WordlView_broadcast(tx <- chan WorldView.WorldView, port int) error {
 
 	defer conn.Close()
 
-	HeartbeatTimer := time.NewTicker(config.HeartbeatTime) 
-    defer HeartbeatTimer.Stop()
+	HeartbeatTimer := time.NewTicker(config.HeartbeatTime)
+	defer HeartbeatTimer.Stop()
 
-    var last WorldView.WorldView
+	var last WorldView.WorldView
 
+	for {
+		select {
 
-    for {
-        select {
+		case view := <-tx:
+			last = view
 
-        case view := <-tx:
-            last = view
-
-        case <-HeartbeatTimer.C:
-            data, err := json.Marshal(last)
-    		if err != nil {
-        		continue
-    		}
-    		conn.Write(data)
-            }
-        }
+		case <-HeartbeatTimer.C:
+			data, err := json.Marshal(last)
+			if err != nil {
+				continue
+			}
+			conn.Write(data)
+		}
+	}
 }
 
-
-
-
-func Reciever(rx chan <- WorldView.WorldView, port int) error {
+func Reciever(rx chan<- WorldView.WorldView, port int) error {
 
 	addr := net.UDPAddr{IP: net.IPv4zero, Port: port}
 
-	conn, err := net.ListenUDP("udp4",&addr)
+	conn, err := net.ListenUDP("udp4", &addr)
 	if err != nil {
 		return err
 	}
 	defer conn.Close()
 
-	buf := make([]byte,config.Buffer)
+	buf := make([]byte, config.Buffer)
 
 	for {
 		n, _, err := conn.ReadFromUDP(buf)
@@ -63,12 +58,11 @@ func Reciever(rx chan <- WorldView.WorldView, port int) error {
 			continue
 		}
 
-		var view WorldView.WorldView 
-		err = json.Unmarshal(buf[:n], &view)	
+		var view WorldView.WorldView
+		err = json.Unmarshal(buf[:n], &view)
 		if err != nil {
 			continue
 		}
-		rx <- view 
+		rx <- view
 	}
 }
-
