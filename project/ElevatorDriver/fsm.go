@@ -66,13 +66,17 @@ func elevator_fsm(
 				case EB_Idle:
 					switch {
 						case orders[elevatorState.floor][elevatorState.direction] || orders[elevatorState.floor][elevio.BT_Cab]: 
-							elevatorState.behaviour = EB_DoorOpen
+							doorOpen <- true
 							orderDone(elevatorState, elevatorState.floor, elevatorState.direction, orderDoneC)
+							elevatorState.behaviour = EB_DoorOpen
+							updatedElevatorState <- elevatorState
+							
 						
 						case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)] || orders[elevatorState.floor][elevio.BT_Cab]:
+							doorOpen <- true
+							orderDone(elevatorState, elevatorState.floor, oppositeDirection(elevatorState.direction), orderDoneC)
 							elevatorState.direction = oppositeDirection(elevatorState.direction)
 							elevatorState.behaviour = EB_DoorOpen
-							orderDone(elevatorState, elevatorState.floor, oppositeDirection(elevatorState.direction), orderDoneC)
 
 						case orders.orderInSameDirection(elevatorState.direction):
 							elevatorState.behaviour = EB_Moving
