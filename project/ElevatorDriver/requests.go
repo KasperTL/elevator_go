@@ -74,13 +74,8 @@ func request_below(e Elevator) int {
 	return 0
 }
 
-func request_here(e Elevator) int {
-	for button := 0; button < config.NumButtons; button++ {
-		if (e.requests[e.floor][button]) {
-			return 1
-		}
-	}
-	return 0
+func requestAtCurrentFloor(orders Orders, e Elevator) bool {
+	return orders[e.floor][e.direction] || orders[e.floor][elevio.BT_Cab]
 }
 
 func requests_chooseDirection(e Elevator) DirnBehaviourPair {
@@ -88,7 +83,7 @@ func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 	case ED_Up:
 		if request_above(e) {
 			return ED_Up, EB_Moving
-		} else if request_here(e) {
+		} else if requestAtCurrentFloor(e.orders, e) {
 			return ED_Down, EB_DoorOpen
 		} else if request_below(e) {
 			return ED_Down, EB_Moving
@@ -98,7 +93,7 @@ func requests_chooseDirection(e Elevator) DirnBehaviourPair {
 	case ED_Down:
 		if request_below(e) {
 			return ED_Down, EB_Moving
-		} else if request_here(e) {
+		} else if requestAtCurrentFloor(e.orders, e) {
 			return ED_Up, EB_DoorOpen
 		} else if request_above(e) {
 			return ED_Up, EB_Moving

@@ -1,23 +1,69 @@
-
 package ElevatorDriver
+
 import (
-	"fmt"
-    "project/config"
+	"project/config"
+	"project/elevio"
+	"time"
 )
 
-type Door struct {
-	doorIsOpen bool
-	doorIsObstructed bool
-}
+type DoorState int
+
+const (
+	DS_Open       = 0
+	DS_Closed     = 1
+	DS_Obstructed = 2
+)
 
 func door_fsm(
-	doorIsOpen <- chan bool,
-	doorIsObstructed <- chan bool,
+	openDoorC <-chan bool,
+	doorObstructedC chan<- bool,
+	doorClosingC chan<- bool,
 ) {
-	door := Door{doorIsOpen: false, doorIsObstructed: false}
+	myDoorState := DS_Closed
+
+	obstructionC := make(chan bool)
+	elevio.PollObstructionSwitch(obstructionC)
+
+	doorIsObstructed := false
+
+	//Initializing the doorOpenTimer
+	doorOpenTimer := time.NewTimer(config.DoorOpenDuration)
+	doorOpenTimer.Stop()
 
 	for {
 		select {
-			case 
+		case doorIsObstructed = <-obstructionC:
+			if doorIsObstructed {
+				myDoorState = DS_Obstructed
+				doorObstructedC <- true
+			} else if !doorIsObstructed && myDoorState == DS_Obstructed {
+				doorOpenTimer.Reset(config.DoorOpenDuration)
+				myDoorState = DS_Open
+				doorObstructedC <- false
+			}
+
+		case <-openDoorC:
+			switch myDoorState {
+			case DS_Closed:
+				doorOpenTimer.Reset(config.DoorOpenDuration)
+				myDoorState = DS_Open
+				elevio.SetDoorOpenLamp(true)
+			case DS_Open:
+				doorOpenTimer.Reset(config.DoorOpenDuration)
+			case DS_Obstructed:
+				doorObstructedC <- true
+			}
+
+		case <-doorOpenTimer.C:
+			switch myDoorState {
+			case DS_Open:
+				myDoorState = DS_Closed
+				doorClosingC <- true
+				elevio.SetDoorOpenLamp(false)
+
+			case DS_Obstructed:
+				doorOpenTimer.Reset(config.DoorOpenDuration)
+			}
 		}
 	}
+}

@@ -12,20 +12,24 @@ import (
 
 
 func elevator_fsm(
-	newOrder	     <- chan Orders,
-	newElevator	     chan <- Elevator,
-	deliverOrder     chan <- elevio.ButtonEvent,
+	newOrder	           <- chan Orders,
+	updatedElevatorState   chan <- Elevator,
+	deliverOrder           chan <- elevio.ButtonEvent,
 ) {
 
 	
 	orderDoneC := make(chan elevio.ButtonEvent)
 	newFloorC := make(chan int)
-	elevator := InitializeElevator()
-	newObstructionC := make(chan bool)
+	elevatorState := InitializeElevator()
+	
+	doorOpen := make(chan bool)
+	doorObstructed := make(chan bool)
+	doorClosing := make(chan bool)
+	go door_fsm(doorOpen, doorObstructed, doorClosing)
 
 
 	elevio.PollFloorSensor(newFloorC)
-	elevio.PollObstructionSwitch(newObstructionC)
+	
 
 	var orders Orders
 
@@ -37,46 +41,49 @@ func elevator_fsm(
 			switch {
 			case EB_Moving:
 				switch {
-				case orders[floor][elevator.direction]:
-					elevator.behaviour = EB_DoorOpen
+				case orders[floor][elevatorState.direction]:
+					elevatorState.behaviour = EB_DoorOpen
 					elevio.SetMotorDirection(elevio.MD_Stop)
-					orderDone(elevator, floor, elevator.direction, orderDoneC)
+					doorOpen <- true
+					orderDone(elevatorState, floor, elevatorState.direction, orderDoneC)
 				
 				case orders[floor][elevio.BT_Cab]: // && orders.orderInSameDirection(elevator.direction):
-					elevator.behaviour = EB_DoorOpen
+					elevatorState.behaviour = EB_DoorOpen
 					elevio.SetMotorDirection(elevio.MD_Stop)
-					orderDone(elevator, floor, elevator.direction, orderDoneC)
+					doorOpen <- true
+					orderDone(elevatorState, floor, elevio.BT_Cab, orderDoneC)
 				}
 			}
 
-		case Obstruction := <- newObstructionC:
-			switch {
-				case EB_DoorOpen:
-		
-		
+		case obstrucion := <- doorObstructed:
+			if obstrucion != elevatorState.obstruction {
+				elevatorState.obstruction = obstrucion
+				updatedElevatorState <- elevatorState
+			}
 
 		case orders = <- newOrder:
-			switch newElevator.behaviour {
-			case EB_Idle:
-				switch {
-					case orders[elevator.floor][elevator.direction] || orders[elevator.floor][BT_Cab]: 
-						elevator.behaviour = EB_DoorOpen
-						orderDone(elevator, elevator.floor, elevator.direction, orderDoneC)
-					
-					case orders[elevator.floor][oppositeDirection(elevator.direction)] || orders[elevator.floor][BT_Cab]:
-						elevator.direction = EB_DoorOpen
-						orderDone(elevator, elevator.floor, oppositeDirection(elevator.direction), orderDoneC)
+			switch elevatorState.behaviour {
+				case EB_Idle:
+					switch {
+						case orders[elevatorState.floor][elevatorState.direction] || orders[elevatorState.floor][elevio.BT_Cab]: 
+							elevatorState.behaviour = EB_DoorOpen
+							orderDone(elevatorState, elevatorState.floor, elevatorState.direction, orderDoneC)
+						
+						case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)] || orders[elevatorState.floor][elevio.BT_Cab]:
+							elevatorState.direction = oppositeDirection(elevatorState.direction)
+							elevatorState.behaviour = EB_DoorOpen
+							orderDone(elevatorState, elevatorState.floor, oppositeDirection(elevatorState.direction), orderDoneC)
 
-					case orders.orderInSameDirection(elevator.direction):
-						elevator.behaviour = EB_Moving
+						case orders.orderInSameDirection(elevatorState.direction):
+							elevatorState.behaviour = EB_Moving
 
-					case orders.orderInSameDirection(oppositeDirection(elevator.direction)):
-						elevator.direction = oppositeDirection(elevator.direction)
-						elevator.behaviour = EB_Moving
+						case orders.orderInSameDirection(oppositeDirection(elevatorState.direction)):
+							elevatorState.direction = oppositeDirection(elevatorState.direction)
+							elevatorState.behaviour = EB_Moving
 
-					default:
-						elevator.behaviour = EB_Idle
-				}
+						default:
+							elevatorState.behaviour = EB_Idle
+					}
 			case EB_Moving:
 				switch {
 
