@@ -4,6 +4,7 @@ package ElevatorDriver
 import (
 	"project/config"
 	"project/elevio"
+	"time"
 )
 
 
@@ -16,13 +17,19 @@ func elevator_fsm(
 	deliverOrder     chan <- elevio.ButtonEvent,
 ) {
 
-	doorOpenC := make(chan bool)
-	doorClosedC := make(chan bool)
+	
 	orderDoneC := make(chan elevio.ButtonEvent)
 	newFloorC := make(chan int)
 	elevator := InitializeElevator()
+	newObstructionC := make(chan bool)
+
+
+	elevio.PollFloorSensor(newFloorC)
+	elevio.PollObstructionSwitch(newObstructionC)
 
 	var orders Orders
+
+	
 
 	for {
 		select {
@@ -32,14 +39,21 @@ func elevator_fsm(
 				switch {
 				case orders[floor][elevator.direction]:
 					elevator.behaviour = EB_DoorOpen
+					elevio.SetMotorDirection(elevio.MD_Stop)
 					orderDone(elevator, floor, elevator.direction, orderDoneC)
 				
 				case orders[floor][elevio.BT_Cab]: // && orders.orderInSameDirection(elevator.direction):
 					elevator.behaviour = EB_DoorOpen
+					elevio.SetMotorDirection(elevio.MD_Stop)
 					orderDone(elevator, floor, elevator.direction, orderDoneC)
 				}
 			}
 
+		case Obstruction := <- newObstructionC:
+			switch {
+				case EB_DoorOpen:
+		
+		
 
 		case orders = <- newOrder:
 			switch newElevator.behaviour {
