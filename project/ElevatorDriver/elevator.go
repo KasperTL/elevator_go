@@ -3,6 +3,7 @@ package ElevatorDriver
 import (
 	"fmt"
 	"project/config"
+	"project/elevio"
 )
 
 type ElevatorDirection int
@@ -95,3 +96,27 @@ func InitializeElevator() Elevator {
 		requests:  [config.NumFloors][config.NumButtons]bool{},
 	}
 }
+
+
+func (ed ElevatorDirection) toMD() elevio.MotorDirection {
+	switch ed {
+		case ED_Up:
+			return elevio.MD_Up
+		case ED_Down:
+			return  elevio.MD_Down
+		default:
+			panic("toMD called with invalid ElevatorDirection")
+	}
+}
+
+func (ed ElevatorDirection) toBT() elevio.ButtonType {
+	switch ed {
+		case ED_Up:
+			return elevio.BT_HallUp
+		case ED_Down:
+			return  elevio.BT_HallDown
+		default:
+			panic("toBT called with invalid ElevatorDirection")
+	}
+}
+
