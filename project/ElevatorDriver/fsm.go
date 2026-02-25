@@ -2,14 +2,149 @@
 package ElevatorDriver
 
 import (
-	"../elevio"
+	"project/config"
+	"project/elevio"
+	"time"
 )
+
+
+
+
+
+func elevator_fsm(
+	newOrder	           <- chan Orders,
+	updatedElevatorState   chan <- Elevator,
+	deliverOrder           chan <- elevio.ButtonEvent,
+) {
+
+	
+	orderDoneC := make(chan elevio.ButtonEvent)
+	newFloorC := make(chan int)
+	elevatorState := InitializeElevator()
+	
+	doorOpen := make(chan bool)
+	doorObstructed := make(chan bool)
+	doorClosing := make(chan bool)
+	go door_fsm(doorOpen, doorObstructed, doorClosing)
+
+
+	elevio.PollFloorSensor(newFloorC)
+	
+
+	var orders Orders
+
+	
+
+	for {
+		select {
+		case floor := <- newFloorC:
+			switch {
+			case EB_Moving:
+				switch {
+				case orders[floor][elevatorState.direction]:
+					elevatorState.behaviour = EB_DoorOpen
+					elevio.SetMotorDirection(elevio.MD_Stop)
+					doorOpen <- true
+					orderDone(elevatorState, floor, elevatorState.direction, orderDoneC)
+				
+				case orders[floor][elevio.BT_Cab]: // && orders.orderInSameDirection(elevator.direction):
+					elevatorState.behaviour = EB_DoorOpen
+					elevio.SetMotorDirection(elevio.MD_Stop)
+					doorOpen <- true
+					orderDone(elevatorState, floor, elevio.BT_Cab, orderDoneC)
+				}
+			}
+
+		case obstrucion := <- doorObstructed:
+			if obstrucion != elevatorState.obstruction {
+				elevatorState.obstruction = obstrucion
+				updatedElevatorState <- elevatorState
+			}
+
+		case orders = <- newOrder:
+			switch elevatorState.behaviour {
+				case EB_Idle:
+					switch {
+						case orders[elevatorState.floor][elevatorState.direction] || orders[elevatorState.floor][elevio.BT_Cab]: 
+							doorOpen <- true
+							orderDone(elevatorState, elevatorState.floor, elevatorState.direction, orderDoneC)
+							elevatorState.behaviour = EB_DoorOpen
+							updatedElevatorState <- elevatorState
+							
+						
+						case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)] || orders[elevatorState.floor][elevio.BT_Cab]:
+							doorOpen <- true
+							orderDone(elevatorState, elevatorState.floor, oppositeDirection(elevatorState.direction), orderDoneC)
+							elevatorState.direction = oppositeDirection(elevatorState.direction)
+							elevatorState.behaviour = EB_DoorOpen
+
+						case orders.orderInSameDirection(elevatorState.direction):
+							elevatorState.behaviour = EB_Moving
+
+						case orders.orderInSameDirection(oppositeDirection(elevatorState.direction)):
+							elevatorState.direction = oppositeDirection(elevatorState.direction)
+							elevatorState.behaviour = EB_Moving
+
+						default:
+							elevatorState.behaviour = EB_Idle
+					}
+			case EB_Moving:
+				switch {
+
+				}
+				
+			}
+		}
+	}
+}
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //This will be moved to Orders module later
 func setAllLights(e Elevator) {
-	for floor := 0; floor < N_FLOORS; floor++ {
-		for button := 0; button < N_BUTTONS; button++ {
+	for floor := 0; floor < config.NumFloors; floor++ {
+		for button := 0; button < config.NumButtons; button++ {
 			elevio.SetButtonLamp(button, floor, e.requests[floor][button])
 		}
 	}
@@ -18,8 +153,8 @@ func setAllLights(e Elevator) {
 
 
 func fsm_onInitBetweenFloors(e Elevator) {
-	SetMotorDirection(D_Down)
-	e.dirn = D_Down
+	elevio.SetMotorDirection(elevio.MD_Down)
+	e.direction = ED_Down
 	e.behaviour = EB_Moving
 } 
 
