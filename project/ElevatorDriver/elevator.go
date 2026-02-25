@@ -89,34 +89,47 @@ func ElevatorPrint(e Elevator) {
 }
 
 func InitializeElevator() Elevator {
+	var elevatorFloor int
+	if elevio.GetFloor() != -1 {
+		elevatorFloor = elevio.GetFloor()
+
+	} else {
+		elevio.SetMotorDirection(elevio.MD_Down)
+
+		for {
+			if elevio.GetFloor() != -1 {
+				elevatorFloor = elevio.GetFloor()
+				elevio.SetMotorDirection(elevio.MD_Stop)
+				break
+			}
+		}
+	}
 	return Elevator{
-		floor:     -1,
+		floor:     elevatorFloor,
 		direction: ED_Down,
 		behaviour: EB_Idle,
 		requests:  [config.NumFloors][config.NumButtons]bool{},
 	}
 }
 
-
 func (ed ElevatorDirection) toMD() elevio.MotorDirection {
 	switch ed {
-		case ED_Up:
-			return elevio.MD_Up
-		case ED_Down:
-			return  elevio.MD_Down
-		default:
-			panic("toMD called with invalid ElevatorDirection")
+	case ED_Up:
+		return elevio.MD_Up
+	case ED_Down:
+		return elevio.MD_Down
+	default:
+		panic("toMD called with invalid ElevatorDirection")
 	}
 }
 
 func (ed ElevatorDirection) toBT() elevio.ButtonType {
 	switch ed {
-		case ED_Up:
-			return elevio.BT_HallUp
-		case ED_Down:
-			return  elevio.BT_HallDown
-		default:
-			panic("toBT called with invalid ElevatorDirection")
+	case ED_Up:
+		return elevio.BT_HallUp
+	case ED_Down:
+		return elevio.BT_HallDown
+	default:
+		panic("toBT called with invalid ElevatorDirection")
 	}
 }
-

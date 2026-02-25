@@ -1,13 +1,12 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 )
 
-
-type Orders [config.NumFloors][config.NumButtons] bool
-
+type Orders [config.NumFloors][config.NumButtons]bool
 
 func (o Orders) orderInSameDirection(elevator Elevator) bool {
 
@@ -35,8 +34,6 @@ func (o Orders) orderInSameDirection(elevator Elevator) bool {
 	}
 }
 
-
-
 func (o Orders) orderInOppositeDirection(elevator Elevator) bool {
 	switch elevator.direction {
 	case ED_Down:
@@ -62,16 +59,15 @@ func (o Orders) orderInOppositeDirection(elevator Elevator) bool {
 	}
 }
 
-
-
-
-func orderDone(elevator Elevator, floor int, orderDoneC chan <- elevio.ButtonEvent) {
-	if elevator.requests[floor][elevio.BT_Cab] {
-		elevator.requests[floor][elevio.BT_Cab] = false
+func orderDone(direction ElevatorDirection, floor int, orders Orders, orderDoneC chan<- elevio.ButtonEvent) {
+	fmt.Println("orderDone called - Floor:", floor, "Direction:", direction)
+	fmt.Println("  orders[floor]:", orders[floor])
+	if orders[floor][elevio.BT_Cab] {
+		fmt.Println("  Sending BT_Cab to deliveredOrder")
 		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
-	if elevator.requests[floor][elevator.direction] {
-		elevator.requests[floor][elevator.direction] = false
-		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: e.direction}
+	if orders[floor][direction] {
+		fmt.Println("  Sending direction button to deliveredOrder")
+		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: direction.toBT()}
 	}
 }

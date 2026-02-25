@@ -1,35 +1,46 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
 )
 
-func elevator_fsm(
+func Elevator_fsm(
 	newOrder <-chan Orders,
 	updatedElevatorState chan<- Elevator,
 	deliveredOrder chan<- elevio.ButtonEvent,
 ) {
 
 	newFloorC := make(chan int)
-	elevatorState := InitializeElevator()
 
 	openDoorC := make(chan bool)
 	doorObstructedc := make(chan bool)
 	doorClosingc := make(chan bool)
+
 	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
 
-	elevio.PollFloorSensor(newFloorC)
+	go elevio.PollFloorSensor(newFloorC)
 
 	var orders Orders
 
 	elevatorMotorTimer := time.NewTimer(config.ElevatorMotorTime)
 	elevatorMotorTimer.Stop()
 
+	elevatorState := Elevator{
+		floor:       -1,
+		direction:   ED_Down,
+		behaviour:   EB_Moving,
+		obstruction: false,
+	}
+
+	elevio.SetMotorDirection(elevio.MD_Down)
+
 	for {
 		select {
 		case floor := <-newFloorC:
+			fmt.Println("New floor entered")
 			elevatorMotorTimer.Reset(config.ElevatorMotorTime)
 			elevio.SetFloorIndicator(floor)
 			elevatorState.floor = floor
@@ -40,7 +51,7 @@ func elevator_fsm(
 					elevatorState.behaviour = EB_DoorOpen
 					elevio.SetMotorDirection(elevio.MD_Stop)
 					openDoorC <- true
-					orderDone(elevatorState, floor, deliveredOrder)
+					orderDone(elevatorState.direction, floor, orders, deliveredOrder)
 
 				case orders.orderInSameDirection(elevatorState):
 
@@ -49,7 +60,7 @@ func elevator_fsm(
 					elevio.SetMotorDirection(elevio.MD_Stop)
 					openDoorC <- true
 					elevatorState.direction = oppositeDirection(elevatorState.direction)
-					orderDone(elevatorState, floor, deliveredOrder)
+					orderDone(oppositeDirection(elevatorState.direction), floor, orders, deliveredOrder)
 
 				case orders.orderInOppositeDirection(elevatorState):
 					elevatorState.direction = oppositeDirection(elevatorState.direction)
@@ -59,8 +70,11 @@ func elevator_fsm(
 					elevio.SetMotorDirection(elevio.MD_Stop)
 					elevatorState.behaviour = EB_Idle
 				}
+			default:
+				panic("Entered floor in wrong state")
 			}
 			updatedElevatorState <- elevatorState
+			fmt.Println("Floor sensor:", floor, "Behaviour:", StateToString(elevatorState.behaviour))
 
 		case obstrucion := <-doorObstructedc:
 			if obstrucion != elevatorState.obstruction {
@@ -78,7 +92,7 @@ func elevator_fsm(
 			case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)]:
 				openDoorC <- true
 				elevatorState.direction = oppositeDirection(elevatorState.direction)
-				orderDone(elevatorState, elevatorState.floor, deliveredOrder)
+				orderDone(elevatorState.direction, elevatorState.floor, orders, deliveredOrder)
 
 				//Need to change the names of functions, cant call orderInSameDirection(oppositeDirection)
 			case orders.orderInOppositeDirection(elevatorState):
@@ -93,19 +107,21 @@ func elevator_fsm(
 			updatedElevatorState <- elevatorState
 
 		case orders = <-newOrder:
+			fmt.Println("Entered newOrder - Current floor:", elevatorState.floor, "Behaviour:", StateToString(elevatorState.behaviour))
+			fmt.Println("  Orders:", orders)
 			switch elevatorState.behaviour {
 			case EB_Idle:
 				switch {
 				case orders[elevatorState.floor][elevatorState.direction] || orders[elevatorState.floor][elevio.BT_Cab]:
 					openDoorC <- true
-					orderDone(elevatorState, elevatorState.floor, deliveredOrder)
+					orderDone(elevatorState.direction, elevatorState.floor, orders, deliveredOrder)
 					elevatorState.behaviour = EB_DoorOpen
 					//Wonder if we should combine the two first cases, as they have the same logic, and the second only need too change direction
 
 				case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)] || orders[elevatorState.floor][elevio.BT_Cab]:
 					openDoorC <- true
 					elevatorState.direction = oppositeDirection(elevatorState.direction)
-					orderDone(elevatorState, elevatorState.floor, deliveredOrder)
+					orderDone(elevatorState.direction, elevatorState.floor, orders, deliveredOrder)
 					elevatorState.behaviour = EB_DoorOpen
 
 				case orders.orderInSameDirection(elevatorState):
@@ -127,11 +143,13 @@ func elevator_fsm(
 				switch {
 				case orders[elevatorState.floor][elevatorState.direction] || orders[elevatorState.floor][elevio.BT_Cab]:
 					openDoorC <- true
-					orderDone(elevatorState, elevatorState.floor, deliveredOrder)
+					orderDone(elevatorState.direction, elevatorState.floor, orders, deliveredOrder)
 
 				default:
 
 				}
+			case EB_Moving:
+
 			default:
 				panic("New order not handled")
 

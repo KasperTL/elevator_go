@@ -1,53 +1,52 @@
 package main
 
 import (
-    "fmt"
-    "time"
-    "project/Network"
-	"project/WorldView"
+	"fmt"
+	"project/ElevatorDriver"
+	"project/config"
+	"project/elevio"
 )
 
-
 func main() {
-    port := 40000
+	fmt.Println("Starting elevator control system...")
 
-    tx := make(chan WorldView.WorldView)
-    rx := make(chan WorldView.WorldView)
+	fmt.Println("DEBUG: Creating channels...")
+	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
+	updatedElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
+	deliveredOrder := make(chan elevio.ButtonEvent, config.Buffer)
+	pollButtonC := make(chan elevio.ButtonEvent, config.Buffer)
 
-    // Start receiver goroutine
-    go func() {
-        err := Network.Reciever(rx, port)
-        if err != nil {
-            fmt.Println("Receiver error:", err)
-        }
-    }()
+	elevio.Init("localhost:15657", 4)
 
-    // Start broadcaster goroutine
-    go func() {
-        err := Network.WordlView_broadcast(tx, port)
-        if err != nil {
-            fmt.Println("Broadcast error:", err)
-        }
-    }()
+	fmt.Println("DEBUG: Starting PollButtons...")
+	go elevio.PollButtons(pollButtonC)
 
-    // Simulate sending messages
-    go func() {
-        epoch := uint64(1)
-        for {
-            msg := WorldView.WorldView{
-                SenderID: "TestNode",
-                Epoch:    epoch,
-                Msg:      fmt.Sprintf("Hello %d", epoch),
-            }
-            tx <- msg
-            epoch++
-            time.Sleep(5000 * time.Millisecond) // send every 200ms
-        }
-    }()
+	fmt.Println("DEBUG: Starting handleOrder...")
+	go handleOrder(newOrder, pollButtonC, deliveredOrder)
 
-    // Print received messages
-    for view := range rx {
-        fmt.Printf("Received message from %s: Epoch=%d, Msg=%s\n",
-            view.SenderID, view.Epoch, view.Msg)
-    }
+	fmt.Println("DEBUG: Starting Elevator_fsm...")
+	go ElevatorDriver.Elevator_fsm(newOrder, updatedElevatorState, deliveredOrder)
+
+	fmt.Println("DEBUG: Main function done - waiting...")
+	select {} // Kjøp continue forever
+}
+
+func handleOrder(newOrder chan<- ElevatorDriver.Orders, pollButtonC <-chan elevio.ButtonEvent, deliveredOrder <-chan elevio.ButtonEvent) {
+	var orders ElevatorDriver.Orders
+
+	for {
+		select {
+		case buttonEvent := <-pollButtonC:
+			fmt.Println("Button pressed - Floor:", buttonEvent.Floor, "Button:", buttonEvent.Button)
+			orders[buttonEvent.Floor][buttonEvent.Button] = true
+			newOrder <- orders
+			fmt.Println("Button event")
+
+		case delivered := <-deliveredOrder:
+			fmt.Println("Order delivered - Floor:", delivered.Floor, "Button:", delivered.Button)
+			orders[delivered.Floor][delivered.Button] = false
+			newOrder <- orders
+			fmt.Println("Delivered order")
+		}
+	}
 }
