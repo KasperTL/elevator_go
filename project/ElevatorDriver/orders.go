@@ -8,11 +8,11 @@ import (
 
 type Orders [config.NumFloors][config.NumButtons]bool
 
-func orderInDirection(floor int, direction ElevatorDirection, orders Orders) bool {
+func orderInDirection(thisFloor int, direction ElevatorDirection, orders Orders) bool {
 
 	switch direction {
 	case ED_Up:
-		for floor := floor + 1; floor < config.NumFloors; floor++ {
+		for floor := thisFloor + 1; floor < config.NumFloors; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
 				if orders[floor][button] {
 					return true
@@ -21,7 +21,7 @@ func orderInDirection(floor int, direction ElevatorDirection, orders Orders) boo
 		}
 		return false
 	case ED_Down:
-		for floor := 0; floor < floor; floor++ {
+		for floor := 0; floor < thisFloor; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
 				if orders[floor][button] {
 					return true
@@ -34,10 +34,10 @@ func orderInDirection(floor int, direction ElevatorDirection, orders Orders) boo
 	}
 }
 
-func orderInOppositeDirection(floor int, direction ElevatorDirection, orders Orders) bool {
+func orderInOppositeDirection(thisFloor int, direction ElevatorDirection, orders Orders) bool {
 	switch direction {
 	case ED_Down:
-		for floor := floor + 1; floor < config.NumFloors; floor++ {
+		for floor := thisFloor + 1; floor < config.NumFloors; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
 				if orders[floor][button] {
 					return true
@@ -46,7 +46,7 @@ func orderInOppositeDirection(floor int, direction ElevatorDirection, orders Ord
 		}
 		return false
 	case ED_Up:
-		for floor := 0; floor < floor; floor++ {
+		for floor := 0; floor < thisFloor; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
 				if orders[floor][button] {
 					return true
@@ -58,8 +58,6 @@ func orderInOppositeDirection(floor int, direction ElevatorDirection, orders Ord
 		panic("Invalid elevator direction")
 	}
 }
-
-
 
 func clearOrderAtFloor(floor int, direction ElevatorDirection, orders Orders, clearOrderAtFloorC chan<- elevio.ButtonEvent) {
 	if orders[floor][elevio.BT_Cab] {
@@ -69,8 +67,6 @@ func clearOrderAtFloor(floor int, direction ElevatorDirection, orders Orders, cl
 		clearOrderAtFloorC <- elevio.ButtonEvent{Floor: floor, Button: direction.toBT()}
 	}
 }
-
-
 
 func cabOrderAtFloor(currentFloor int, orders Orders) bool {
 	return orders[currentFloor][elevio.BT_Cab]
@@ -83,17 +79,6 @@ func orderAtFloorInDirection(currentFloor int, direction ElevatorDirection, orde
 func orderAtFloorOppositeDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
 	return orders[currentFloor][oppositeDirection(direction).toBT()]
 }
-
-
-
-
-
-
-
-
-
-
-
 
 func printOrders(orders Orders) {
 	fmt.Printf("  +--------------------+\n")
