@@ -6,10 +6,10 @@ import (
 )
 
 func handleNewOrder(
-	elevator *Elevator,
-	orders Orders,
-	openDoorC chan<- bool,
-	deliveredOrder chan<- elevio.ButtonEvent,
+	elevator           *Elevator,
+	orders             Orders,
+	openDoorC          chan<- bool,
+	deliveredOrder     chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
 
@@ -58,12 +58,12 @@ func handleNewOrder(
 }
 
 func handleFloorArrival(
-	elevator *Elevator,
-	orders Orders,
-	openDoorC chan<- bool,
-	deliveredOrder chan<- elevio.ButtonEvent,
+	elevator           *Elevator,
+	orders             Orders,
+	openDoorC          chan<- bool,
+	deliveredOrder     chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
-	floor int,
+	floor              int,
 ) {
 	elevio.SetFloorIndicator(floor)
 	elevator.floor = floor
@@ -99,10 +99,10 @@ func handleFloorArrival(
 }
 
 func handleDoorClosing(
-	elevator *Elevator,
-	orders Orders,
-	openDoorC chan<- bool,
-	deliveredOrder chan<- elevio.ButtonEvent,
+	elevator           *Elevator,
+	orders             Orders,
+	openDoorC          chan<- bool,
+	deliveredOrder     chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
 

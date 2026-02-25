@@ -7,25 +7,28 @@ import (
 )
 
 func Elevator_fsm(
-	newOrder <-chan Orders,
+	newOrder             <-chan Orders,
 	updatedElevatorState chan<- Elevator,
-	deliveredOrder chan<- elevio.ButtonEvent,
+	deliveredOrder       chan<- elevio.ButtonEvent,
 ) {
 
-	newFloorC := make(chan int)
+	newFloorC            := make(chan int)
 
-	openDoorC := make(chan bool)
-	doorObstructedc := make(chan bool)
-	doorClosingc := make(chan bool)
+	openDoorC            := make(chan bool)
+	doorObstructedc      := make(chan bool)
+	doorClosingc         := make(chan bool)
+
+	elevatorMotorTimer   := time.NewTimer(config.ElevatorMotorTime)
+	elevatorMotorTimer.Stop()
+
 
 	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
-
+	
 	go elevio.PollFloorSensor(newFloorC)
 
 	var orders Orders
 
-	elevatorMotorTimer := time.NewTimer(config.ElevatorMotorTime)
-	elevatorMotorTimer.Stop()
+	
 
 	elevator := Elevator{
 		floor:       -1,

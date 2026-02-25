@@ -8,10 +8,10 @@ import (
 
 func main() {
 
-	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
+	newOrder             := make(chan ElevatorDriver.Orders, config.Buffer)
 	updatedElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
-	deliveredOrder := make(chan elevio.ButtonEvent, config.Buffer)
-	pollButtonC := make(chan elevio.ButtonEvent, config.Buffer)
+	deliveredOrder       := make(chan elevio.ButtonEvent, config.Buffer)
+	pollButtonC          := make(chan elevio.ButtonEvent, config.Buffer)
 
 	elevio.Init("localhost:15657", 4)
 

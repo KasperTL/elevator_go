@@ -16,20 +16,18 @@ const (
 )
 
 func door_fsm(
-	openDoorC <-chan bool,
-	doorObstructedC chan<- bool,
-	doorClosingC chan<- bool,
+	openDoorC        <-chan bool,
+	doorObstructedC  chan<- bool,
+	doorClosingC     chan<- bool,
 ) {
-	myDoorState := DS_Closed
-
-	obstructionC := make(chan bool)
-	go elevio.PollObstructionSwitch(obstructionC)
-
+	obstructionC     := make(chan bool)
+	myDoorState      := DS_Closed
 	doorIsObstructed := false
-
-	//Initializing the doorOpenTimer
-	doorOpenTimer := time.NewTimer(config.DoorOpenDuration)
+	doorOpenTimer    := time.NewTimer(config.DoorOpenDuration)
 	doorOpenTimer.Stop()
+
+	go elevio.PollObstructionSwitch(obstructionC)
+	
 
 	for {
 		select {
