@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+
 	"project/config"
 	"project/elevio"
 	"time"
@@ -22,7 +23,7 @@ func door_fsm(
 	myDoorState := DS_Closed
 
 	obstructionC := make(chan bool)
-	elevio.PollObstructionSwitch(obstructionC)
+	go elevio.PollObstructionSwitch(obstructionC)
 
 	doorIsObstructed := false
 
