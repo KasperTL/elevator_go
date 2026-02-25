@@ -8,9 +8,9 @@ import (
 )
 
 func main() {
-	fmt.Println("Starting elevator control system...")
+	//fmt.Println("Starting elevator control system...")
 
-	fmt.Println("DEBUG: Creating channels...")
+	//fmt.Println("DEBUG: Creating channels...")
 	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
 	updatedElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
 	deliveredOrder := make(chan elevio.ButtonEvent, config.Buffer)
@@ -18,16 +18,16 @@ func main() {
 
 	elevio.Init("localhost:15657", 4)
 
-	fmt.Println("DEBUG: Starting PollButtons...")
+	//fmt.Println("DEBUG: Starting PollButtons...")
 	go elevio.PollButtons(pollButtonC)
 
-	fmt.Println("DEBUG: Starting handleOrder...")
+	//fmt.Println("DEBUG: Starting handleOrder...")
 	go handleOrder(newOrder, pollButtonC, deliveredOrder)
 
-	fmt.Println("DEBUG: Starting Elevator_fsm...")
+	//fmt.Println("DEBUG: Starting Elevator_fsm...")
 	go ElevatorDriver.Elevator_fsm(newOrder, updatedElevatorState, deliveredOrder)
 
-	fmt.Println("DEBUG: Main function done - waiting...")
+	//fmt.Println("DEBUG: Main function done - waiting...")
 	select {} // Kjøp continue forever
 }
 

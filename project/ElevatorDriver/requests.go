@@ -66,8 +66,38 @@ func orderDone(direction ElevatorDirection, floor int, orders Orders, orderDoneC
 		fmt.Println("  Sending BT_Cab to deliveredOrder")
 		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
-	if orders[floor][direction] {
+	if orders[floor][direction.toBT()] { // ← Fikset: direction.toBT() i stedet for direction
 		fmt.Println("  Sending direction button to deliveredOrder")
 		orderDoneC <- elevio.ButtonEvent{Floor: floor, Button: direction.toBT()}
 	}
+	fmt.Printf("  +--------------------+\n")
+	for f := config.NumFloors - 1; f >= 0; f-- {
+		fmt.Printf("  |")
+		for b := 0; b < config.NumButtons; b++ {
+			if orders[f][b] {
+				fmt.Printf("  #   ")
+			} else {
+				fmt.Printf("  -   ")
+			}
+		}
+		fmt.Printf("| %d\n", f)
+	}
+	fmt.Printf("  +--------------------+\n")
+}
+
+
+func printOrders(orders Orders) {
+	fmt.Printf("  +--------------------+\n")
+	for f := config.NumFloors - 1; f >= 0; f-- {
+		fmt.Printf("  |")
+		for b := 0; b < config.NumButtons; b++ {
+			if orders[f][b] {
+				fmt.Printf("  #   ")
+			} else {
+				fmt.Printf("  -   ")
+			}
+		}
+		fmt.Printf("| %d\n", f)
+	}
+	fmt.Printf("  +--------------------+\n")
 }

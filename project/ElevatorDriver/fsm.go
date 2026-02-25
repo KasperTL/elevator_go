@@ -77,12 +77,14 @@ func Elevator_fsm(
 			fmt.Println("Floor sensor:", floor, "Behaviour:", StateToString(elevatorState.behaviour))
 
 		case obstrucion := <-doorObstructedc:
+			fmt.Println("Obstruction entered")
 			if obstrucion != elevatorState.obstruction {
 				elevatorState.obstruction = obstrucion
 				updatedElevatorState <- elevatorState
 			}
 
 		case <-doorClosingc:
+			fmt.Println("Door closing")
 			switch {
 			case orders.orderInSameDirection(elevatorState):
 				elevatorState.behaviour = EB_Moving
@@ -107,8 +109,8 @@ func Elevator_fsm(
 			updatedElevatorState <- elevatorState
 
 		case orders = <-newOrder:
-			fmt.Println("Entered newOrder - Current floor:", elevatorState.floor, "Behaviour:", StateToString(elevatorState.behaviour))
-			fmt.Println("  Orders:", orders)
+			fmt.Println("New order received")
+			printOrders(orders)
 			switch elevatorState.behaviour {
 			case EB_Idle:
 				switch {
@@ -117,6 +119,7 @@ func Elevator_fsm(
 					orderDone(elevatorState.direction, elevatorState.floor, orders, deliveredOrder)
 					elevatorState.behaviour = EB_DoorOpen
 					//Wonder if we should combine the two first cases, as they have the same logic, and the second only need too change direction
+					fmt.Println("  Order in same direction at current floor")
 
 				case orders[elevatorState.floor][oppositeDirection(elevatorState.direction)] || orders[elevatorState.floor][elevio.BT_Cab]:
 					openDoorC <- true

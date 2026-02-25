@@ -24,7 +24,6 @@ const (
 type Elevator struct {
 	floor       int
 	direction   ElevatorDirection
-	requests    Orders // NumButtons is BT_HallDown, BT_HallUp and BT_Cab
 	behaviour   ElevatorBehaviour
 	obstruction bool
 	motorStop   bool // Must be implemented
@@ -77,11 +76,7 @@ func ElevatorPrint(e Elevator) {
 	for f := config.NumFloors - 1; f >= 0; f-- {
 		fmt.Printf("  |")
 		for b := 0; b < config.NumButtons; b++ {
-			if e.requests[f][b] {
-				fmt.Printf("  #   ")
-			} else {
-				fmt.Printf("  -   ")
-			}
+
 		}
 		fmt.Printf("| %d\n", f)
 	}
@@ -108,7 +103,6 @@ func InitializeElevator() Elevator {
 		floor:     elevatorFloor,
 		direction: ED_Down,
 		behaviour: EB_Idle,
-		requests:  [config.NumFloors][config.NumButtons]bool{},
 	}
 }
 
