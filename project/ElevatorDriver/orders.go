@@ -8,22 +8,22 @@ import (
 
 type Orders [config.NumFloors][config.NumButtons]bool
 
-func (o Orders) orderInSameDirection(elevator Elevator) bool {
+func orderInDirection(floor int, direction ElevatorDirection, orders Orders) bool {
 
-	switch elevator.direction {
+	switch direction {
 	case ED_Up:
-		for floor := elevator.floor + 1; floor < config.NumFloors; floor++ {
+		for floor := floor + 1; floor < config.NumFloors; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
-				if o[floor][button] {
+				if orders[floor][button] {
 					return true
 				}
 			}
 		}
 		return false
 	case ED_Down:
-		for floor := 0; floor < elevator.floor; floor++ {
+		for floor := 0; floor < floor; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
-				if o[floor][button] {
+				if orders[floor][button] {
 					return true
 				}
 			}
@@ -34,21 +34,21 @@ func (o Orders) orderInSameDirection(elevator Elevator) bool {
 	}
 }
 
-func (o Orders) orderInOppositeDirection(elevator Elevator) bool {
-	switch elevator.direction {
+func orderInOppositeDirection(floor int, direction ElevatorDirection, orders Orders) bool {
+	switch direction {
 	case ED_Down:
-		for floor := elevator.floor + 1; floor < config.NumFloors; floor++ {
+		for floor := floor + 1; floor < config.NumFloors; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
-				if o[floor][button] {
+				if orders[floor][button] {
 					return true
 				}
 			}
 		}
 		return false
 	case ED_Up:
-		for floor := 0; floor < elevator.floor; floor++ {
+		for floor := 0; floor < floor; floor++ {
 			for button := 0; button < config.NumButtons; button++ {
-				if o[floor][button] {
+				if orders[floor][button] {
 					return true
 				}
 			}
@@ -59,7 +59,9 @@ func (o Orders) orderInOppositeDirection(elevator Elevator) bool {
 	}
 }
 
-func clearOrderAtFloor(direction ElevatorDirection, floor int, orders Orders, clearOrderAtFloorC chan<- elevio.ButtonEvent) {
+
+
+func clearOrderAtFloor(floor int, direction ElevatorDirection, orders Orders, clearOrderAtFloorC chan<- elevio.ButtonEvent) {
 	if orders[floor][elevio.BT_Cab] {
 		clearOrderAtFloorC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
@@ -70,7 +72,17 @@ func clearOrderAtFloor(direction ElevatorDirection, floor int, orders Orders, cl
 
 
 
+func cabOrderAtFloor(currentFloor int, orders Orders) bool {
+	return orders[currentFloor][elevio.BT_Cab]
+}
 
+func orderAtFloorInDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
+	return orders[currentFloor][direction.toBT()]
+}
+
+func orderAtFloorOppositeDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
+	return orders[currentFloor][oppositeDirection(direction).toBT()]
+}
 
 
 
