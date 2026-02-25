@@ -14,6 +14,6 @@ const (
 
 	DisconnectTime   = 1 * time.Second
 	DoorOpenDuration = 3 * time.Second
-	Elevator         = 4 * time.Second
+	ElevatorMotorTime         = 4 * time.Second
 	HeartbeatTime    = 1000 * time.Millisecond
 )
