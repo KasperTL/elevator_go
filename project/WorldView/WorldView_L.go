@@ -33,7 +33,7 @@ type ElevatorState struct {
 // what gets broadcasted over UDP
 type WorldView struct {
 	SenderID int
-	Epoch    uint64 //- can be useful but use cyclic counter only for remove all epoch from worldview later
+	//Epoch    uint64 //- can be useful but use cyclic counter only for remove all epoch from worldview later
 
 	//Hall orders [floor][0=up,1=down]
 	//global
@@ -50,7 +50,7 @@ type WorldView struct {
 func InitWorldView(nodeID int) WorldView {
 	view := WorldView{
 		SenderID: nodeID,
-		Epoch:    0,
+		//Epoch:    0,
 	}
 	for f := 0; f < config.NumFloors; f++ {
 		view.HallOrders[f][0] = OrderInfo{State: OrderIdle, Epoch: 0}
@@ -81,10 +81,10 @@ func OnButtonPress(view *WorldView, btn elevio.ButtonEvent) {
 
 	dir := buttonToDir(btn.Button)
 	if view.HallOrders[btn.Floor][dir].State == OrderIdle {
-		view.Epoch++
+		//view.Epoch++
 		view.HallOrders[btn.Floor][dir] = OrderInfo{
 			State: OrderPending,
-			Epoch: view.Epoch,
+			Epoch: view.HallOrders[btn.Floor][dir].Epoch + 1,
 		}
 		//elevio.SetButtonLamp(btn.Button, btn.Floor, true)
 		//dont turn on hall light here, wait for orderConfirmed
@@ -102,10 +102,10 @@ func OnOrderComplete(view *WorldView, btn elevio.ButtonEvent) {
 	}
 
 	dir := buttonToDir(btn.Button)
-	view.Epoch++
+	//view.Epoch++
 	view.HallOrders[btn.Floor][dir] = OrderInfo{
 		State: OrderIdle,
-		Epoch: view.Epoch,
+		Epoch: view.HallOrders[btn.Floor][dir].Epoch + 1,
 	}
 	elevio.SetButtonLamp(btn.Button, btn.Floor, false)
 }
@@ -173,10 +173,10 @@ func checkConfirmation(mine *WorldView, peerViews map[int]WorldView, alivePeers 
 			}
 
 			if allSeen {
-				mine.Epoch++
+				//mine.Epoch++
 				mine.HallOrders[f][d] = OrderInfo{
 					State: OrderConfirmed,
-					Epoch: mine.Epoch,
+					Epoch: mine.HallOrders[f][d].Epoch + 1,
 				}
 				// Turn on hall light only now, order is safely distributed
 				btn := dirToButton(d, f)
