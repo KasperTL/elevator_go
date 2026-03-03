@@ -20,25 +20,27 @@ const (
 type OrderInfo struct {
 	State OrderState
 	Epoch uint64 //cyclic counter for each order
-	//Helps to tell which order is newer
+	//Helps to tell which order is newer, higher = newer
+}
+
+// ElevatorState -information about the elevator
+type ElevatorState struct {
+	Floor     int
+	Direction ElevatorDriver.ElevatorDirection
+	Behaviour ElevatorDriver.ElevatorBehaviour
 }
 
 // what gets broadcasted over UDP
 type WorldView struct {
 	SenderID int
-	Epoch    uint64
+	Epoch    uint64 //- can be useful but use cyclic counter only for remove all epoch from worldview later
 
 	//Hall orders [floor][0=up,1=down]
 	//global
 	HallOrders [config.NumFloors][2]OrderInfo
 
-	//elevatorstate
-	MyFloor     int
-	MyDirection ElevatorDriver.ElevatorDirection
-	MyBehaviour ElevatorDriver.ElevatorBehaviour
-	//AliveList [config.NumElevators] bool
-	//ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
-	///Orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState
+	//Elevator state needed by assigner
+	ElevatorStates [config.NumElevators]ElevatorState
 
 	//cab calls
 	//local for each eleveator but others need to know if busy or not
@@ -47,27 +49,33 @@ type WorldView struct {
 
 func InitWorldView(nodeID int) WorldView {
 	view := WorldView{
-		SenderID:    nodeID,
-		Epoch:       0,
-		MyFloor:     -1,
-		MyDirection: ElevatorDriver.ED_Stop,
-		MyBehaviour: ElevatorDriver.EB_Idle,
+		SenderID: nodeID,
+		Epoch:    0,
 	}
 	for f := 0; f < config.NumFloors; f++ {
 		view.HallOrders[f][0] = OrderInfo{State: OrderIdle, Epoch: 0}
 		view.HallOrders[f][1] = OrderInfo{State: OrderIdle, Epoch: 0}
 		view.MyCabCalls[f] = false
 	}
+	// Initialize elevator states to sane defaults
+	for i := 0; i < config.NumElevators; i++ {
+		view.ElevatorStates[i] = ElevatorState{
+			Floor:     -1,
+			Direction: ElevatorDriver.ED_Down,
+			Behaviour: ElevatorDriver.EB_Idle,
+		}
+	}
 	return view
 }
 
 // button press
-// hall -->Order pending + light ON
+// hall -->Order pending + light ON once confirmed
 // cab --> Stored in MyCabCalls (Elevator driver handles cab calls?)
 // dir for direction
 func OnButtonPress(view *WorldView, btn elevio.ButtonEvent) {
 	if btn.Button == elevio.BT_Cab {
 		view.MyCabCalls[btn.Floor] = true
+		//does cab call turn on light?
 		return
 	}
 
@@ -78,7 +86,8 @@ func OnButtonPress(view *WorldView, btn elevio.ButtonEvent) {
 			State: OrderPending,
 			Epoch: view.Epoch,
 		}
-		elevio.SetButtonLamp(btn.Button, btn.Floor, true)
+		//elevio.SetButtonLamp(btn.Button, btn.Floor, true)
+		//dont turn on hall light here, wait for orderConfirmed
 	}
 }
 
@@ -88,6 +97,7 @@ func OnButtonPress(view *WorldView, btn elevio.ButtonEvent) {
 func OnOrderComplete(view *WorldView, btn elevio.ButtonEvent) {
 	if btn.Button == elevio.BT_Cab {
 		view.MyCabCalls[btn.Floor] = false
+		//need cab light?
 		return
 	}
 
@@ -103,26 +113,27 @@ func OnOrderComplete(view *WorldView, btn elevio.ButtonEvent) {
 //Function called when receiving WorldView from another elevator
 //higher epoch/cyclic counter =newer = use it
 
-func MergeWorldView(mine *WorldView, peer WorldView, alivePeers []int) {
+func MergeWorldView(mine *WorldView, peer WorldView) {
 	if peer.SenderID == mine.SenderID {
 		return
 	}
 
 	for f := 0; f < config.NumFloors; f++ {
 		for d := 0; d < 2; d++ {
+			before := mine.HallOrders[f][d].State
 			merged := mergeOrder(mine.HallOrders[f][d], peer.HallOrders[f][d])
 			mine.HallOrders[f][d] = merged
 
-			btn := buttonToDirection(d, f)
-			if merged.State == OrderIdle {
+			// If the merged state changed to Idle, turn light off
+			if merged.State == OrderIdle && before != OrderIdle {
+				btn := dirToButton(d, f)
 				elevio.SetButtonLamp(btn.Button, f, false)
-			} else {
-				elevio.SetButtonLamp(btn.Button, f, true)
 			}
 		}
+		// Merge peer elevator state
+		mine.ElevatorStates[peer.SenderID] = peer.ElevatorStates[peer.SenderID]
 	}
-
-	checkConfirmation(mine, peer)
+	//checkConfirmation(mine, peer)
 }
 
 // Higher cyclic counter/epoch/newer order =higher state wins
@@ -140,18 +151,36 @@ func mergeOrder(mine OrderInfo, peer OrderInfo) OrderInfo {
 }
 
 // pending to confirmed when peer also knows about order
-func checkConfirmation(mine *WorldView, peer WorldView) {
+// OrderPending --> OrderConfimred when all Alive peers
+// Will help WorldView with consensus
+func checkConfirmation(mine *WorldView, peerViews map[int]WorldView, alivePeers []int) {
 	for f := 0; f < config.NumFloors; f++ {
 		for d := 0; d < 2; d++ {
 			if mine.HallOrders[f][d].State != OrderPending {
 				continue
 			}
-			if peer.HallOrders[f][d].State != OrderIdle {
+
+			allSeen := true
+			for _, peerID := range alivePeers {
+				if peerID == mine.SenderID {
+					continue
+				}
+				pv, exists := peerViews[peerID]
+				if !exists || pv.HallOrders[f][d].State == OrderIdle {
+					allSeen = false
+					break
+				}
+			}
+
+			if allSeen {
 				mine.Epoch++
 				mine.HallOrders[f][d] = OrderInfo{
 					State: OrderConfirmed,
 					Epoch: mine.Epoch,
 				}
+				// Turn on hall light only now, order is safely distributed
+				btn := dirToButton(d, f)
+				elevio.SetButtonLamp(btn.Button, f, true)
 			}
 		}
 	}
@@ -175,8 +204,8 @@ func buttonToDir(btn elevio.ButtonType) int {
 	return 1
 }
 
-// dir for direction
-func buttonToDirection(dir int, floor int) elevio.ButtonEvent {
+// Helps with repetitive code to help indicate if it is a up/down button
+func dirToButton(dir int, floor int) elevio.ButtonEvent {
 	if dir == 0 {
 		return elevio.ButtonEvent{Floor: floor, Button: elevio.BT_HallUp}
 	}

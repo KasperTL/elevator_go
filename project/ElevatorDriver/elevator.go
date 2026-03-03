@@ -106,6 +106,11 @@ func InitializeElevator() Elevator {
 	}
 }
 
+// Getters
+func (e Elevator) GetFloor() int                   { return e.floor }
+func (e Elevator) GetDirection() ElevatorDirection { return e.direction }
+func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.behaviour }
+
 func (ed ElevatorDirection) toMD() elevio.MotorDirection {
 	switch ed {
 	case ED_Up:
