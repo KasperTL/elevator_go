@@ -85,7 +85,7 @@ func handleFloorArrival(
 	if orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) {
 		stopAndOpenDoor(elevator, openDoorC)
 		reverseDirection(elevator)
-		clearOrderAtFloor(elevator.floor, oppositeDirection(elevator.direction), orders, deliveredOrder)
+		clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
 		return
 	}
 

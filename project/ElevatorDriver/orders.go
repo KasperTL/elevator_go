@@ -80,7 +80,7 @@ func orderAtFloorOppositeDirection(currentFloor int, direction ElevatorDirection
 	return orders[currentFloor][oppositeDirection(direction).toBT()]
 }
 
-func printOrders(orders Orders) {
+func PrintOrders(orders Orders) {
 	fmt.Printf("  +--------------------+\n")
 	for f := config.NumFloors - 1; f >= 0; f-- {
 		fmt.Printf("  |")

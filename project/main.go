@@ -1,5 +1,6 @@
 package main
 
+/*
 import (
 	"flag"
 	"fmt"
@@ -25,7 +26,7 @@ func main() {
 	var id string
 
 
-	
+
 	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
 
@@ -83,20 +84,20 @@ func main() {
 		}
 	}
 }
+*/
 
-/*
 import (
-	""project/ElevatorDriver"
+	"project/ElevatorDriver"
 	"project/config"
-	"project/elevio""
+	"project/elevio"
 )
 
 func main() {
 
-	newOrder             := make(chan ElevatorDriver.Orders, config.Buffer)
+	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
 	updatedElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
-	deliveredOrder       := make(chan elevio.ButtonEvent, config.Buffer)
-	pollButtonC          := make(chan elevio.ButtonEvent, config.Buffer)
+	deliveredOrder := make(chan elevio.ButtonEvent, config.Buffer)
+	pollButtonC := make(chan elevio.ButtonEvent, config.Buffer)
 
 	elevio.Init("localhost:15657", 4)
 
@@ -117,11 +118,12 @@ func handleOrder(newOrder chan<- ElevatorDriver.Orders, pollButtonC <-chan elevi
 		case buttonEvent := <-pollButtonC:
 			orders[buttonEvent.Floor][buttonEvent.Button] = true
 			newOrder <- orders
+			ElevatorDriver.PrintOrders(orders)
 
 		case delivered := <-deliveredOrder:
 			orders[delivered.Floor][delivered.Button] = false
 			newOrder <- orders
+			ElevatorDriver.PrintOrders(orders)
 		}
 	}
 }
-*/
