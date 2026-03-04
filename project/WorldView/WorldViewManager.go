@@ -1,63 +1,69 @@
-// package WorldView
+package WorldView
 
-// import (
-// 	"project/ElevatorDriver"
-// 	"project/config"
-// 	"project/elevio"
-// )
+import (
+	"project/ElevatorDriver"
+	"project/config"
+	"project/elevio"
+)
 
-// func WorldViewManager(
-// 	networkRx 			<-chan WorldView,
-// 	networkTx			chan<- WorldView,
-// 	newLocalElevatorState	<-chan ElevatorDriver.Elevator,
-// 	orderRequest		<-chan elevio.ButtonEvent,
-// 	orderComplete 		chan<- elevio.ButtonEvent,
-// 	orderConfirmed 		chan<- elevio.ButtonEvent,
-// 	alivePeersInput  	<-chan []int,
-// 	myNodeID 			int,
-// ) {
+func WorldViewManager(
+	networkRx 			    <-chan WorldView,
+	networkTx			    chan<- WorldView,
+	newLocalElevatorState	<-chan ElevatorDriver.Elevator,
+	orderComplete 		    chan<- elevio.ButtonEvent,
+	orderConfirmed 		    chan<- elevio.ButtonEvent,
+	alivePeersInput  	    <-chan []int,
+	myNodeID 			    int,
+) {
 
-// 	myWorldView := InitWorldView(myNodeID)
+	myWorldView := InitWorldView(myNodeID)
 
-// 	for {
-// 		select {
-// 			case alivePeers := <- alivePeersInput:
+	orderRequest := make(chan elevio.ButtonEvent, config.Buffer)
+	
+	alivePeers := []int{}
 
-// 				myWorldView.Orders = syncOnRejon(myWorldView.Orders, alivePeers)
+	go elevio.PollButtons(orderRequest)
 
-// 			case peerWorldView := <- networkRx:
 
-// 				myWorldView        = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
-// 				myWorldView.Orders = updateHalOrders(myWorldView.Orders, myNodeID, alivePeers)
+	for {
+		select {
+			case alivePeers = <- alivePeersInput:
 
-// 			case myElevatorState := <- newLocalElevatorState:
+				myWorldView.Orders = syncOnRejon(myWorldView.Orders, alivePeers)
 
-// 				myWorldView.ElevatorStates[myNodeID] = myElevatorState
+			case peerWorldView := <- networkRx:
 
-// 			case newOrder := <- orderRequest:
+				myWorldView        = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
+				myWorldView.Orders = updateHalOrders(myWorldView.Orders, myNodeID, alivePeers)
 
-// 				switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
-// 				case OrderIdle:
-// 					var peersOrderView []OrderState
+			case myElevatorState := <- newLocalElevatorState:
 
-//             		for peerID := range(alivePeers) {
-//                 		if peerID != myNodeID {
-//                     		peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][newOrder.Button])
-//                			}
-//             		} 
-// 					// there may be some problems regarding the cab orders here 
-// 					if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending){
-// 						myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
-// 					} else {
-// 						continue
-// 					}
+				myWorldView.ElevatorStates[myNodeID] = myElevatorState
 
-// 				case OrderPending:
-// 					continue
-// 				case OrderConfirmed: 
-// 					continue
-// 				}
+			case newOrder := <- orderRequest:
+
+				switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
+				case OrderIdle:
+					var peersOrderView []OrderState
+
+            		for peerID := range(alivePeers) {
+                		if peerID != myNodeID {
+                    		peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][newOrder.Button])
+               			}
+            		} 
+					// there may be some problems regarding the cab orders here 
+					if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending){
+						myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
+					} else {
+						continue
+					}
+
+				case OrderPending:
+					continue
+				case OrderConfirmed: 
+					continue
+				}
 			
-// 		}
-// 	}
-// }
+		}
+	}
+}
