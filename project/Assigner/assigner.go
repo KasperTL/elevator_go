@@ -23,8 +23,6 @@ type HRAInput struct {
 	States       map[string]HRAElevState   `json:"states"`
 }
 
-
-
 func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.Orders {
 
 	hraExecutable := ""
@@ -60,19 +58,19 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		panic("json.Marshal error")
 	}
 
-	ret, err := exec.Command("../Excecutables/"+hraExecutable, "-i", string(jsonBytes)).CombinedOutput()
+	ret, err := exec.Command("../Excecutables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
 		fmt.Println(string(ret))
 		panic("exec.Command error")
 	}
 
-	output := new(map[string][][2]bool)
+	output := new(map[string]ElevatorDriver.Orders)
 	err = json.Unmarshal(ret, &output)
 	if err != nil {
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
-	
-	return 
+
+	return (*output)[strconv.Itoa(nodeID)]
 }
