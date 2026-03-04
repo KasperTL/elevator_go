@@ -44,11 +44,11 @@ func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
 func DirnToString(ed ElevatorDirection) string {
 	switch ed {
 	case ED_Up:
-		return "Up"
+		return "up"
 	case ED_Down:
-		return "Down"
+		return "down"
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
 
@@ -56,13 +56,13 @@ func DirnToString(ed ElevatorDirection) string {
 func StateToString(b ElevatorBehaviour) string {
 	switch b {
 	case EB_Idle:
-		return "Idle"
+		return "idle"
 	case EB_Moving:
-		return "Moving"
+		return "moving"
 	case EB_DoorOpen:
-		return "DoorOpen"
+		return "doorOpen"
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
 
@@ -111,7 +111,7 @@ func InitializeElevator() Elevator {
 func (e Elevator) GetFloor() int                   { return e.floor }
 func (e Elevator) GetDirection() ElevatorDirection { return e.direction }
 func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.behaviour }
-func (e Elevator) GetMotorStop() bool 			   { return e.motorStop }
+func (e Elevator) GetMotorStop() bool              { return e.motorStop }
 func (e Elevator) GetObstructed() bool             { return e.obstruction }
 
 func (ed ElevatorDirection) toMD() elevio.MotorDirection {
