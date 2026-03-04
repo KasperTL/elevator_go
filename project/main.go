@@ -1,6 +1,5 @@
 package main
 
-/*
 import (
 	"flag"
 	"fmt"
@@ -8,84 +7,62 @@ import (
 	"project/Network/bcast"
 	"project/Network/localip"
 	"project/Network/peers"
+	"project/WorldView"
+	"project/config"
+	"project/elevio"
+	"project/ElevatorDriver"
 	"time"
 )
 
-// We define some custom struct to send over the network.
-// Note that all members we want to transmit must be public. Any private members
-//
-//	will be received as zero-values.
-type HelloMsg struct {
-	Message string
-	Iter    int
-}
+var Port int
+var id int
 
 func main() {
-	// Our id can be anything. Here we pass it on the command line, using
-	//  `go run main.go -id=our_id`
-	var id string
 
+	port := flag.Int("port", 15657, "UDP port to use for communication" "<--Default value, override with command line argument -port=xxxxx")
+	ElevatorId := flag.Int("id", 0, "Unique ID for this elevator" "<--Default value, override with command line argument -id=xxxxx")
 
-
-	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
 
-	// ... or alternatively, we can use the local IP address.
-	// (But since we can run multiple programs on the same PC, we also append the
-	//  process ID)
-	if id == "" {
-		localIP, err := localip.LocalIP()
-		if err != nil {
-			fmt.Println(err)
-			localIP = "DISCONNECTED"
-		}
-		id = fmt.Sprintf("peer-%s-%d", localIP, os.Getpid())
-	}
+	Port = *port
+	id = *ElevatorId
 
-	// We make a channel for receiving updates on the id's of the peers that are
-	//  alive on the network
-	peerUpdateCh := make(chan peers.PeerUpdate)
-	// We can disable/enable the transmitter after it has been started.
-	// This could be used to signal that we are somehow "unavailable".
-	peerTxEnable := make(chan bool)
-	go peers.Transmitter(15647, id, peerTxEnable)
-	go peers.Receiver(15647, peerUpdateCh)
+	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
+	
+	fmt.Println("Elevator initialized with id", id, "on port", Port)
+	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
+	
+	peersRx 		:= make(chan peers.PeerUpdate, config.Buffer)
+	peersTx 		:= make(chan bool, config.Buffer)
+	
+	networkTx 		:= make(chan WorldView.WorldView, config.Buffer)
+	networkRx 		:= make(chan WorldView.WorldView, config.Buffer)
+	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
+	orderComplete 	:= make(chan elevio.ButtonEvent, config.Buffer)
+	orderConfirmed 	:= make(chan elevio.ButtonEvent, config.Buffer)
+	alivePeersInput := make(chan []int, config.Buffer)
 
-	// We make channels for sending and receiving our custom data types
-	helloTx := make(chan HelloMsg)
-	helloRx := make(chan HelloMsg)
-	// ... and start the transmitter/receiver pair on some port
-	// These functions can take any number of channels! It is also possible to
-	//  start multiple transmitters/receivers on the same port.
-	go bcast.Transmitter(16569, helloTx)
-	go bcast.Receiver(16569, helloRx)
+	newOrder			 := make(chan ElevatorDriver.Orders, config.Buffer)
+	
 
-	// The example message. We just send one of these every second.
-	go func() {
-		helloMsg := HelloMsg{"Hello from " + id, 0}
-		for {
-			helloMsg.Iter++
-			helloTx <- helloMsg
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	go ElevatorDriver.Elevator_fsm(newOrder, newLocalElevatorState, orderComplete)
 
-	fmt.Println("Started")
-	for {
-		select {
-		case p := <-peerUpdateCh:
-			fmt.Printf("Peer update:\n")
-			fmt.Printf("  Peers:    %q\n", p.Peers)
-			fmt.Printf("  New:      %q\n", p.New)
-			fmt.Printf("  Lost:     %q\n", p.Lost)
+	go worldViewManager(
+		networkRx, 
+		networkTx, 
+		newLocalElevatorState, 
+		orderComplete, 
+		orderConfirmed, 
+		alivePeersInput, 
+		myNodeID)
 
-		case a := <-helloRx:
-			fmt.Printf("Received: %#v\n", a)
-		}
-	}
+
 }
-*/
 
+
+
+
+/*
 import (
 	"project/ElevatorDriver"
 	"project/config"
@@ -94,10 +71,10 @@ import (
 
 func main() {
 
-	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
+	newOrder             := make(chan ElevatorDriver.Orders, config.Buffer)
 	updatedElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
-	deliveredOrder := make(chan elevio.ButtonEvent, config.Buffer)
-	pollButtonC := make(chan elevio.ButtonEvent, config.Buffer)
+	deliveredOrder       := make(chan elevio.ButtonEvent, config.Buffer)
+	pollButtonC          := make(chan elevio.ButtonEvent, config.Buffer)
 
 	elevio.Init("localhost:15657", 4)
 
@@ -118,12 +95,11 @@ func handleOrder(newOrder chan<- ElevatorDriver.Orders, pollButtonC <-chan elevi
 		case buttonEvent := <-pollButtonC:
 			orders[buttonEvent.Floor][buttonEvent.Button] = true
 			newOrder <- orders
-			ElevatorDriver.PrintOrders(orders)
 
 		case delivered := <-deliveredOrder:
 			orders[delivered.Floor][delivered.Button] = false
 			newOrder <- orders
-			ElevatorDriver.PrintOrders(orders)
 		}
 	}
 }
+*/

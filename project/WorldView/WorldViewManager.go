@@ -29,31 +29,31 @@ func WorldViewManager(
 		select {
 			case alivePeers = <- alivePeersInput:
 
-				myWorldView.Orders = syncOnRejon(myWorldView.Orders, alivePeers)
+				myWorldView.HallOrders = syncOnRejon(myWorldView.HallOrders, alivePeers)
 
 			case peerWorldView := <- networkRx:
 
 				myWorldView        = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
-				myWorldView.Orders = updateHalOrders(myWorldView.Orders, myNodeID, alivePeers)
+				myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, alivePeers)
 
 			case myElevatorState := <- newLocalElevatorState:
 
-				myWorldView.ElevatorStates[myNodeID] = myElevatorState
+				myWorldView.ElevatorStates[myNodeID].Elevator = myElevatorState
 
 			case newOrder := <- orderRequest:
 
-				switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
+				switch myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] {
 				case OrderIdle:
 					var peersOrderView []OrderState
 
             		for peerID := range(alivePeers) {
                 		if peerID != myNodeID {
-                    		peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][newOrder.Button])
+                    		peersOrderView = append(peersOrderView, myWorldView.HallOrders[peerID][newOrder.Floor][newOrder.Button])
                			}
             		} 
 					// there may be some problems regarding the cab orders here 
 					if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending){
-						myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
+						myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
 					} else {
 						continue
 					}

@@ -22,7 +22,7 @@ type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
 	ElevatorStates [config.NumElevators]ElevatorState
-	Orders         [config.NumElevators][config.NumFloors][2]OrderState
+	HallOrders     [config.NumElevators][config.NumFloors][2]OrderState
 }
 
 func InitWorldView(nodeID int) WorldView {
@@ -68,9 +68,9 @@ func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
 }
 
 func syncOnRejon(
-	localOrders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+	localOrders [config.NumElevators][config.NumFloors][2]OrderState,
 	alivePeers []int,
-) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
+) [config.NumElevators][config.NumFloors][2]OrderState {
 
 	if len(alivePeers) == 0 {
 		return localOrders
@@ -94,11 +94,11 @@ func syncOnRejon(
 	}
 	return localOrders
 }
-func updateHalOrders(
-	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+func updateHallOrders(
+	orders [config.NumElevators][config.NumFloors][2]OrderState,
 	NodeID int,
 	alivePeers []int,
-) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
+) [config.NumElevators][config.NumFloors][2]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumButtons; button++ {
@@ -123,7 +123,7 @@ func updateHalOrders(
 					newOrderState = OrderConfirmed
 				}
 			case OrderConfirmed:
-				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView) {
+				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView, OrderIdle) {
 					newOrderState = OrderIdle
 				}
 			}
@@ -136,7 +136,7 @@ func updateHalOrders(
 func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldView) WorldView {
 	myWorldView.ElevatorStates[peerWorldView.SenderID] = peerWorldView.ElevatorStates[peerWorldView.SenderID]
 	myWorldView.AliveList[peerWorldView.SenderID] = peerWorldView.AliveList[peerWorldView.SenderID]
-	myWorldView.Orders[peerWorldView.SenderID] = peerWorldView.Orders[peerWorldView.SenderID]
+	myWorldView.HallOrders[peerWorldView.SenderID] = peerWorldView.HallOrders[peerWorldView.SenderID]
 
 	return myWorldView
 }
