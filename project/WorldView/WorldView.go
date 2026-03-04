@@ -5,6 +5,135 @@ import (
 	"project/config"
 )
 
+<<<<<<< HEAD
+type OrderState int 
+const (
+	OrderIdle       = 0 
+	OrderPending    = 1
+	OrderConfirmed  = 2
+)
+
+type WorldView struct {
+    SenderID int 
+    AliveList [config.NumElevators] bool
+    ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
+    Orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState
+}
+
+func InitWorldView(nodeID int) WorldView {
+    view := WorldView{SenderID: nodeID}
+    return view 
+}
+
+func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
+    for _, p := range peers {
+        if p != stateA || p != stateB {
+            return false 
+        }
+    }
+    return true
+}
+
+func anyPeerAhead(peers []OrderState, state OrderState) bool {
+    for _, p := range peers {
+        if p == state {
+            return true 
+        }
+    }
+    return false
+}
+
+func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
+    if peerOrderState == myOrderState {
+        return false 
+    }
+    switch myOrderState {
+    case OrderIdle:
+        return peerOrderState == OrderPending || peerOrderState == OrderConfirmed
+        
+    case OrderPending:
+        return peerOrderState == OrderConfirmed
+
+    case OrderConfirmed:
+        return peerOrderState == OrderIdle
+
+    default:
+        return false
+    }
+}
+
+func syncOnRejon( 
+    localOrders [config.NumElevators][config.NumFloors][config.NumButtons] OrderState,
+    alivePeers []int,
+) [config.NumElevators][config.NumFloors][config.NumButtons] OrderState {
+
+    if len(alivePeers) == 0 {
+        return localOrders
+    }
+
+    for elevator := 0; elevator < config.NumElevators; elevator++ {
+        for floor := 0; floor < config.NumFloors; floor++ {
+            for button := 0; button < config.NumButtons; button++ {
+
+                for peerID := range(alivePeers) {
+                    peerState := localOrders[peerID][floor][button]
+
+					if isPeerAhead(peerState, localOrders[elevator][floor][button]) {
+                    	localOrders[elevator][floor][button] = peerState
+                }	  
+                }
+            }
+        }
+    }
+    return localOrders
+}
+func updateHalOrders(
+    orders [config.NumElevators][config.NumFloors][config.NumButtons] OrderState,
+    NodeID int ,
+    alivePeers []int,
+) [config.NumElevators][config.NumFloors][config.NumButtons] OrderState {
+
+    for floor := 0; floor < config.NumFloors; floor++ {
+        for button := 0; button < config.NumButtons; button++ {
+            currentOrderState := orders[NodeID][floor][button]
+            newOrderState := currentOrderState
+
+            var peersOrderView []OrderState
+
+            for peerID := range(alivePeers) {
+                if peerID != NodeID {
+                    peersOrderView = append(peersOrderView, orders[peerID][floor][button])
+                }
+            }   
+
+            switch currentOrderState {
+            case OrderIdle:
+                if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) && anyPeerAhead(peersOrderView, OrderPending) {
+                    newOrderState = OrderPending
+                }
+            case OrderPending:
+                if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) && anyPeerAhead(peersOrderView, OrderConfirmed) {
+                    newOrderState = OrderConfirmed
+                }
+            case OrderConfirmed:
+                if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView) {
+                    newOrderState = OrderIdle
+                }
+            }
+            orders[NodeID][floor][button] = newOrderState
+        }
+    }
+    return orders
+}
+
+func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldView) WorldView {
+    myWorldView.ElevatorStates[peerWorldView.SenderID] 	= peerWorldView.ElevatorStates[peerWorldView.SenderID]
+	myWorldView.AliveList[peerWorldView.SenderID] 		= peerWorldView.AliveList[peerWorldView.SenderID]
+	myWorldView.Orders[peerWorldView.SenderID] 			= peerWorldView.Orders[peerWorldView.SenderID]
+
+    return myWorldView
+}
+=======
 type ElevatorState struct {
 	Elevator  ElevatorDriver.Elevator
 	CabOrders [config.NumFloors]bool
@@ -110,6 +239,7 @@ func updateHalOrders(
 					peersOrderView = append(peersOrderView, orders[peerID][floor][button])
 				}
 			}
+>>>>>>> origin/main
 
 			switch currentOrderState {
 			case OrderIdle:
