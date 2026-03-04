@@ -49,7 +49,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		}
 	}
 
-	orders := WorldView.FromOrderStateToBool(wv.Orders[nodeID])
+	orders := WorldView.FromOrderStateToBool(wv.HallOrders[nodeID])
 	input := HRAInput{orders, stateMap}
 
 	jsonBytes, err := json.Marshal(input)
