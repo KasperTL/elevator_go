@@ -73,6 +73,13 @@ func handleFloorArrival(
 	}
 
 	if orderAtFloorInDirection(elevator.floor, elevator.direction, orders) || cabOrderAtFloor(elevator.floor, orders) {
+		// TODO
+		// This is toooooooo long, need to fikse 
+		if !orderInDirection(elevator.floor, elevator.direction, orders) && orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) && !orderAtFloorInDirection(elevator.floor, elevator.direction, orders){
+			stopAndOpenDoor(elevator, openDoorC)
+			reverseDirection(elevator)
+			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+		}
 		stopAndOpenDoor(elevator, openDoorC)
 		clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
 		return
@@ -130,3 +137,5 @@ func handleDoorClosing(
 
 	enterIdle(elevator)
 }
+
+

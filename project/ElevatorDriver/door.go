@@ -1,7 +1,6 @@
 package ElevatorDriver
 
 import (
-
 	"project/config"
 	"project/elevio"
 	"time"
@@ -16,18 +15,17 @@ const (
 )
 
 func door_fsm(
-	openDoorC        <-chan bool,
-	doorObstructedC  chan<- bool,
-	doorClosingC     chan<- bool,
+	openDoorC <-chan bool,
+	doorObstructedC chan<- bool,
+	doorClosingC chan<- bool,
 ) {
-	obstructionC     := make(chan bool)
-	myDoorState      := DS_Closed
+	obstructionC := make(chan bool)
+	myDoorState := DS_Closed
 	doorIsObstructed := false
-	doorOpenTimer    := time.NewTimer(config.DoorOpenDuration)
+	doorOpenTimer := time.NewTimer(config.DoorOpenDuration)
 	doorOpenTimer.Stop()
 
 	go elevio.PollObstructionSwitch(obstructionC)
-	
 
 	for {
 		select {
@@ -50,7 +48,10 @@ func door_fsm(
 			case DS_Open:
 				doorOpenTimer.Reset(config.DoorOpenDuration)
 			case DS_Obstructed:
-				doorObstructedC <- true
+				doorOpenTimer.Reset(config.DoorOpenDuration)
+				myDoorState = DS_Obstructed
+				elevio.SetDoorOpenLamp(true)
+
 			}
 
 		case <-doorOpenTimer.C:
