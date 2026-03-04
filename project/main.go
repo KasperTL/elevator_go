@@ -3,15 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-	"project/Network/bcast"
-	"project/Network/localip"
+	assigner "project/Assigner"
+	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/WorldView"
 	"project/config"
 	"project/elevio"
-	"project/ElevatorDriver"
-	"time"
+	"strconv"
 )
 
 var Port int
@@ -19,8 +17,8 @@ var id int
 
 func main() {
 
-	port := flag.Int("port", 15657, "UDP port to use for communication" "<--Default value, override with command line argument -port=xxxxx")
-	ElevatorId := flag.Int("id", 0, "Unique ID for this elevator" "<--Default value, override with command line argument -id=xxxxx")
+	port := flag.Int("port", 15657, "UDP port to use for communication"+"<--Default value, override with command line argument -port=xxxxx")
+	ElevatorId := flag.Int("id", 0, "Unique ID for this elevator"+"<--Default value, override with command line argument -id=xxxxx")
 
 	flag.Parse()
 
@@ -28,39 +26,63 @@ func main() {
 	id = *ElevatorId
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
-	
+
 	fmt.Println("Elevator initialized with id", id, "on port", Port)
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
-	
-	peersRx 		:= make(chan peers.PeerUpdate, config.Buffer)
-	peersTx 		:= make(chan bool, config.Buffer)
-	
-	networkTx 		:= make(chan WorldView.WorldView, config.Buffer)
-	networkRx 		:= make(chan WorldView.WorldView, config.Buffer)
+
+	peersRx := make(chan peers.PeerUpdate, config.Buffer)
+	peersTx := make(chan bool, config.Buffer)
+
+	//starts peers moudle which will detect which leevators are alive on network
+	go peers.Transmitter(config.PeersPortNumber, strconv.Itoa(id), peersTx)
+	go peers.Receiver(config.PeersPortNumber, peersRx)
+
+	//connect networktx and rx to actual UDP network for node talking
+
+	networkTx := make(chan WorldView.WorldView, config.Buffer)
+	networkRx := make(chan WorldView.WorldView, config.Buffer)
 	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
-	orderComplete 	:= make(chan elevio.ButtonEvent, config.Buffer)
-	orderConfirmed 	:= make(chan elevio.ButtonEvent, config.Buffer)
+	orderComplete := make(chan elevio.ButtonEvent, config.Buffer)
+	orderConfirmed := make(chan elevio.ButtonEvent, config.Buffer)
 	alivePeersInput := make(chan []int, config.Buffer)
 
-	newOrder			 := make(chan ElevatorDriver.Orders, config.Buffer)
-	
+	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
+	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
+
+	// Convert PeerUpdate strings to []int since alivePeersInput is an expected int
+	go func() {
+		for peerUpdate := range peersRx {
+			aliveIDs := []int{}
+			for _, p := range peerUpdate.Peers {
+				peerID, _ := strconv.Atoi(p)
+				aliveIDs = append(aliveIDs, peerID)
+			}
+			alivePeersInput <- aliveIDs
+		}
+	}()
+
+	go func() {
+		for wv := range worldViewOut {
+			orders := assigner.CalculateOptimalOrders(wv, id)
+			newOrder <- orders
+		}
+	}()
 
 	go ElevatorDriver.Elevator_fsm(newOrder, newLocalElevatorState, orderComplete)
 
-	go worldViewManager(
-		networkRx, 
-		networkTx, 
-		newLocalElevatorState, 
-		orderComplete, 
-		orderConfirmed, 
-		alivePeersInput, 
-		myNodeID)
+	go WorldView.WorldViewManager(
+		networkRx,
+		networkTx,
+		newLocalElevatorState,
+		orderComplete,
+		orderConfirmed,
+		worldViewOut,
+		alivePeersInput,
+		id)
 
+	select {}
 
 }
-
-
-
 
 /*
 import (

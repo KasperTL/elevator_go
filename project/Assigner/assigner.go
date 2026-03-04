@@ -6,6 +6,8 @@ import (
 	"os/exec"
 	"project/ElevatorDriver"
 	"project/WorldView"
+
+	//"project/WorldView"
 	"project/config"
 	"runtime"
 	"strconv"
@@ -37,6 +39,9 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 
 	stateMap := make(map[string]HRAElevState)
 	for i, e := range wv.ElevatorStates {
+		if !wv.AliveList[i] {
+			continue
+		}
 		if e.Elevator.GetObstructed() || e.Elevator.GetMotorStop() {
 			continue
 		} else {
