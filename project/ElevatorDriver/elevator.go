@@ -26,7 +26,7 @@ type Elevator struct {
 	direction   ElevatorDirection
 	behaviour   ElevatorBehaviour
 	obstruction bool
-	motorStop   bool // Must be implemented
+	motorStop   bool
 }
 
 func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
@@ -52,6 +52,7 @@ func DirnToString(ed ElevatorDirection) string {
 	}
 }
 
+// change to Behaviour to string
 func StateToString(b ElevatorBehaviour) string {
 	switch b {
 	case EB_Idle:
@@ -110,6 +111,8 @@ func InitializeElevator() Elevator {
 func (e Elevator) GetFloor() int                   { return e.floor }
 func (e Elevator) GetDirection() ElevatorDirection { return e.direction }
 func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.behaviour }
+func (e Elevator) GetMotorStop() bool 			   { return e.motorStop }
+func (e Elevator) GetObstructed() bool             { return e.obstruction }
 
 func (ed ElevatorDirection) toMD() elevio.MotorDirection {
 	switch ed {
