@@ -23,6 +23,9 @@ func main() {
 	// Our id can be anything. Here we pass it on the command line, using
 	//  `go run main.go -id=our_id`
 	var id string
+
+
+	
 	flag.StringVar(&id, "id", "", "id of this peer")
 	flag.Parse()
 
