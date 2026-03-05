@@ -27,7 +27,8 @@ func main() {
 	id = *ElevatorId
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
-	
+
+
 	fmt.Println("Elevator initialized with id", id, "on port", Port)
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
 

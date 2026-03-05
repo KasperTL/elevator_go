@@ -27,6 +27,7 @@ func Elevator_fsm(
 
 	var orders Orders
 
+	//elevator := InitializeElevator()
 	elevator := Elevator{
 		floor:       -1,
 		direction:   ED_Down,

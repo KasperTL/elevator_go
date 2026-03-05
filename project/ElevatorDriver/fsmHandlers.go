@@ -6,10 +6,10 @@ import (
 )
 
 func handleNewOrder(
-	elevator           *Elevator,
-	orders             Orders,
-	openDoorC          chan<- bool,
-	deliveredOrder     chan<- elevio.ButtonEvent,
+	elevator *Elevator,
+	orders Orders,
+	openDoorC chan<- bool,
+	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
 
@@ -58,24 +58,25 @@ func handleNewOrder(
 }
 
 func handleFloorArrival(
-	elevator           *Elevator,
-	orders             Orders,
-	openDoorC          chan<- bool,
-	deliveredOrder     chan<- elevio.ButtonEvent,
+	elevator *Elevator,
+	orders Orders,
+	openDoorC chan<- bool,
+	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
-	floor              int,
+	floor int,
 ) {
 	elevio.SetFloorIndicator(floor)
 	elevator.floor = floor
 
 	if elevator.behaviour != EB_Moving {
-		panic("Floor arrival in non-moving state")
+		//panic("Floor arrival in non-moving state")
+		return
 	}
 
 	if orderAtFloorInDirection(elevator.floor, elevator.direction, orders) || cabOrderAtFloor(elevator.floor, orders) {
 		// TODO
-		// This is toooooooo long, need to fikse 
-		if !orderInDirection(elevator.floor, elevator.direction, orders) && orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) && !orderAtFloorInDirection(elevator.floor, elevator.direction, orders){
+		// This is toooooooo long, need to fix
+		if !orderInDirection(elevator.floor, elevator.direction, orders) && orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) && !orderAtFloorInDirection(elevator.floor, elevator.direction, orders) {
 			stopAndOpenDoor(elevator, openDoorC)
 			reverseDirection(elevator)
 			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
@@ -106,10 +107,10 @@ func handleFloorArrival(
 }
 
 func handleDoorClosing(
-	elevator           *Elevator,
-	orders             Orders,
-	openDoorC          chan<- bool,
-	deliveredOrder     chan<- elevio.ButtonEvent,
+	elevator *Elevator,
+	orders Orders,
+	openDoorC chan<- bool,
+	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
 
@@ -137,5 +138,3 @@ func handleDoorClosing(
 
 	enterIdle(elevator)
 }
-
-

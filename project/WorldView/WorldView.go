@@ -32,7 +32,7 @@ func InitWorldView(nodeID int) WorldView {
 
 func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
 	for _, p := range peers {
-		if p != stateA || p != stateB {
+		if p != stateA && p != stateB {
 			return false
 		}
 	}
@@ -87,7 +87,6 @@ func syncOnRejon(
 						localOrders[elevator][floor][button] = peerState
 					}
 				}
-
 
 			}
 		}
