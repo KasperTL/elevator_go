@@ -11,7 +11,7 @@ func WorldViewManager(
 	networkRx <-chan WorldView,
 	networkTx chan<- WorldView,
 	newLocalElevatorState <-chan ElevatorDriver.Elevator,
-	orderComplete  <-chan elevio.ButtonEvent,
+	orderComplete <-chan elevio.ButtonEvent,
 	orderConfirmed chan<- elevio.ButtonEvent,
 	worldViewOut chan<- WorldView,
 	alivePeersInput <-chan []int,
@@ -62,12 +62,13 @@ func WorldViewManager(
 				myWorldView.ElevatorStates[myNodeID].CabOrders[newOrder.Floor] = true
 				elevio.SetButtonLamp(newOrder.Button, newOrder.Floor, true)
 				worldViewOut <- myWorldView
+				networkTx <- myWorldView
 				continue
 			}
-			
+
 			switch myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] {
 			case OrderIdle:
-				
+
 				var peersOrderView []OrderState
 				for _, peerID := range alivePeers {
 					if peerID != myNodeID {
@@ -86,18 +87,20 @@ func WorldViewManager(
 			case OrderConfirmed:
 				continue
 			}
-		case order := <- orderComplete:
+		case order := <-orderComplete:
 			fmt.Println("Order complete:", order)
 			if order.Button == elevio.BT_Cab {
-				myWorldView.ElevatorStates[myNodeID].CabOrders[order.Floor] = false
+				myWorldView.ElevatorStates[myNodeID].CabOrders[order.Button] = false
 				elevio.SetButtonLamp(order.Button, order.Floor, false)
 				worldViewOut <- myWorldView
-				continue
+				//continue
+			} else {
+				// NOT CORRECT, should be updated to reflect the new order states
+				myWorldView.HallOrders[myNodeID][order.Floor][order.Button] = OrderIdle
 			}
-			// NOT CORRECT, should be updated to reflect the new order states
-			myWorldView.HallOrders[myNodeID][order.Floor][order.Button] = OrderIdle
-			orderConfirmed <- order
+			//orderConfirmed <- order
 			worldViewOut <- myWorldView
+			networkTx <- myWorldView
 
 		}
 		networkTx <- myWorldView
