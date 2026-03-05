@@ -1,10 +1,12 @@
 package WorldView
 
 import (
-	"fmt"
+	"time"
 	"project/ElevatorDriver"
+	"project/Network/peers"
 	"project/config"
 	"project/elevio"
+	"strconv"
 )
 
 func WorldViewManager(
@@ -12,9 +14,8 @@ func WorldViewManager(
 	networkTx chan<- WorldView,
 	newLocalElevatorState <-chan ElevatorDriver.Elevator,
 	orderComplete  <-chan elevio.ButtonEvent,
-	orderConfirmed chan<- elevio.ButtonEvent,
-	worldViewOut chan<- WorldView,
-	alivePeersInput <-chan []int,
+	worldViewConfirmed chan<- WorldView,
+	peersC <-chan peers.PeerUpdate,
 	myNodeID int,
 ) {
 
@@ -22,46 +23,44 @@ func WorldViewManager(
 	myWorldView.AliveList[myNodeID] = true
 
 	orderRequest := make(chan elevio.ButtonEvent, config.Buffer)
-
-	alivePeers := []int{}
-
 	go elevio.PollButtons(orderRequest)
+
+	var peers peers.PeerUpdate
+
+
+
+	heartbeat := time.NewTicker(config.HeartbeatTime)
+
+	
 
 	for {
 		select {
-		case alivePeers = <-alivePeersInput:
-			fmt.Println("alivePeers", alivePeers)
-			//Reset all to False
-			for i := range myWorldView.AliveList {
-				myWorldView.AliveList[i] = false
-			}
-
-			//mark alive as true
-			for _, peerID := range alivePeers {
-				myWorldView.AliveList[peerID] = true
-			}
-
-			myWorldView.AliveList[myNodeID] = true
-
-			myWorldView.HallOrders = syncOnRejon(myWorldView.HallOrders, alivePeers)
+		case <- heartbeat.C:
 			networkTx <- myWorldView
+
+		case peers = <- peersC:
+		
+			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
+
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
-			myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, alivePeers)
-			worldViewOut <- myWorldView
-			networkTx <- myWorldView
+			myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, peers.Peers)
+			setHallOrderLights(myWorldView)
+			worldViewConfirmed <- myWorldView
 
 		case myElevatorState := <-newLocalElevatorState:
 
 			myWorldView.ElevatorStates[myNodeID].Elevator = myElevatorState
 			networkTx <- myWorldView
+			worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
+			
 			if newOrder.Button == elevio.BT_Cab {
 				myWorldView.ElevatorStates[myNodeID].CabOrders[newOrder.Floor] = true
-				elevio.SetButtonLamp(newOrder.Button, newOrder.Floor, true)
-				worldViewOut <- myWorldView
+				elevio.SetButtonLamp(elevio.BT_Cab, newOrder.Floor, true)
+				worldViewConfirmed <- myWorldView
 				continue
 			}
 			
@@ -69,12 +68,16 @@ func WorldViewManager(
 			case OrderIdle:
 				
 				var peersOrderView []OrderState
-				for _, peerID := range alivePeers {
+				for _, peerIDstr := range peers.Peers {
+					peerID, err := strconv.Atoi(peerIDstr)  
+					if err != nil {
+						continue
+					}
 					if peerID != myNodeID {
 						peersOrderView = append(peersOrderView, myWorldView.HallOrders[peerID][newOrder.Floor][newOrder.Button])
 					}
 				}
-				// there may be some problems regarding the cab orders here
+				
 				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
 					myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
 				} else {
@@ -86,20 +89,44 @@ func WorldViewManager(
 			case OrderConfirmed:
 				continue
 			}
-		case order := <- orderComplete:
-			fmt.Println("Order complete:", order)
-			if order.Button == elevio.BT_Cab {
-				myWorldView.ElevatorStates[myNodeID].CabOrders[order.Floor] = false
-				elevio.SetButtonLamp(order.Button, order.Floor, false)
-				worldViewOut <- myWorldView
+
+		case comleteOrder := <- orderComplete:
+			
+			if comleteOrder.Button == elevio.BT_Cab {
+				myWorldView.ElevatorStates[myNodeID].CabOrders[comleteOrder.Floor] = false 
+				elevio.SetButtonLamp(comleteOrder.Button, comleteOrder.Floor, false)
+				worldViewConfirmed <- myWorldView
 				continue
 			}
-			// NOT CORRECT, should be updated to reflect the new order states
-			myWorldView.HallOrders[myNodeID][order.Floor][order.Button] = OrderIdle
-			orderConfirmed <- order
-			worldViewOut <- myWorldView
+			
+			switch myWorldView.HallOrders[myNodeID][comleteOrder.Floor][comleteOrder.Button] {
+			case OrderIdle:
+				
+				var peersOrderView []OrderState
+				for _, peerIDstr := range peers.Peers {
+					peerID, err := strconv.Atoi(peerIDstr)  
+					if err != nil {
+						continue
+					}
+					if peerID != myNodeID {
+						peersOrderView = append(peersOrderView, myWorldView.HallOrders[peerID][comleteOrder.Floor][comleteOrder.Button])
+					}
+				}
+				
+				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
+					myWorldView.HallOrders[myNodeID][comleteOrder.Floor][comleteOrder.Button] = OrderIdle
+					setHallOrderLights(myWorldView)
+
+				} else {
+					continue
+				}
+
+			case OrderPending:
+				continue
+			case OrderConfirmed:
+				continue
+			}
 
 		}
-		networkTx <- myWorldView
 	}
 }

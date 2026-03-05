@@ -3,6 +3,8 @@ package WorldView
 import (
 	"project/ElevatorDriver"
 	"project/config"
+	"project/elevio"
+	"strconv"
 )
 
 type ElevatorState struct {
@@ -96,7 +98,7 @@ func syncOnRejon(
 func updateHallOrders(
 	orders [config.NumElevators][config.NumFloors][2]OrderState,
 	NodeID int,
-	alivePeers []int,
+	alivePeers []string,
 ) [config.NumElevators][config.NumFloors][2]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
@@ -106,9 +108,13 @@ func updateHallOrders(
 
 			var peersOrderView []OrderState
 
-			for peerID := range alivePeers {
-				if peerID != NodeID {
-					peersOrderView = append(peersOrderView, orders[peerID][floor][button])
+			for _, alivePeerStr := range alivePeers {
+				alivePeerID, err := strconv.Atoi(alivePeerStr)
+				if err != nil {
+					continue
+				}
+				if alivePeerID != NodeID {
+					peersOrderView = append(peersOrderView, orders[alivePeerID][floor][button])
 				}
 			}
 
@@ -149,4 +155,28 @@ func FromOrderStateToBool(Orders [config.NumFloors][2]OrderState) [config.NumFlo
 		}
 	}
 	return boolOrders
+}
+
+func setHallOrderLights(myWorldView WorldView) {
+	for floor := 0; floor < config.NumFloors; floor++ {
+		for button := 0; button < 2; button++ {
+			orderState := myWorldView.HallOrders[myWorldView.SenderID][floor][button]
+
+			var buttonType elevio.ButtonType
+			if button == 0 {
+				buttonType = elevio.BT_HallUp
+			} else {
+				buttonType = elevio.BT_HallDown
+			}
+
+			switch orderState {
+				case OrderConfirmed:
+					elevio.SetButtonLamp(buttonType,floor,true)
+				case OrderIdle: 
+					elevio.SetButtonLamp(buttonType,floor, false)
+				case OrderPending: 
+					continue
+				}
+		}
+	}
 }

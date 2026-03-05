@@ -6,8 +6,6 @@ import (
 	"os/exec"
 	"project/ElevatorDriver"
 	"project/WorldView"
-
-	//"project/WorldView"
 	"project/config"
 	"runtime"
 	"strconv"

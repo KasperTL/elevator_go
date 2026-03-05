@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	assigner "project/Assigner"
+	"project/Assigner"
 	"project/ElevatorDriver"
-	"project/Network/bcast"
+	//"project/Network/bcast"
 	"project/Network/peers"
 	"project/WorldView"
 	"project/config"
@@ -33,39 +33,26 @@ func main() {
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
 
 	peersRx := make(chan peers.PeerUpdate, config.Buffer)
-	peersTx := make(chan bool, config.Buffer)
+	// peersTx := make(chan bool, config.Buffer)
 
 	//starts peers moudle which will detect which leevators are alive on network
-	go peers.Transmitter(config.PeersPortNumber, strconv.Itoa(id), peersTx)
-	go peers.Receiver(config.PeersPortNumber, peersRx)
+	// go peers.Transmitter(config.PeersPortNumber, strconv.Itoa(id), peersTx)
+	// go peers.Receiver(config.PeersPortNumber, peersRx)
 
 	//connect networktx and rx to actual UDP network for node talking
 
 	networkTx := make(chan WorldView.WorldView, config.Buffer)
 	networkRx := make(chan WorldView.WorldView, config.Buffer)
 
-	go bcast.Transmitter(Port, networkTx)
-	go bcast.Receiver(Port, networkRx)
+	// go bcast.Transmitter(Port, networkTx)
+	// go bcast.Receiver(Port, networkRx)
 
 	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
 	orderComplete := make(chan elevio.ButtonEvent, config.Buffer)
-	orderConfirmed := make(chan elevio.ButtonEvent, config.Buffer)
-	alivePeersInput := make(chan []int, config.Buffer)
 
 	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
 	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
 
-	// Convert PeerUpdate strings to []int since alivePeersInput is an expected int
-	go func() {
-		for peerUpdate := range peersRx {
-			aliveIDs := []int{}
-			for _, p := range peerUpdate.Peers {
-				peerID, _ := strconv.Atoi(p)
-				aliveIDs = append(aliveIDs, peerID)
-			}
-			alivePeersInput <- aliveIDs
-		}
-	}()
 
 	go func() {
 		for wv := range worldViewOut {
@@ -84,9 +71,8 @@ func main() {
 		networkTx,
 		newLocalElevatorState,
 		orderComplete,
-		orderConfirmed,
 		worldViewOut,
-		alivePeersInput,
+		peersRx,
 		id)
 
 	select {}
