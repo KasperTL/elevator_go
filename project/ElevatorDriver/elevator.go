@@ -48,8 +48,9 @@ func DirnToString(ed ElevatorDirection) string {
 	case ED_Down:
 		return "down"
 	default:
-		return "unknown"
+		return "up"
 	}
+	
 }
 
 // change to Behaviour to string

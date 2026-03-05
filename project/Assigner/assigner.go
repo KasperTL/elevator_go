@@ -62,8 +62,8 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Marshal error: ", err)
 		panic("json.Marshal error")
 	}
-
-	ret, err := exec.Command("Excecutables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
+	///home/student/sanntidgruppe_17/elevator_go/project/Assigner/Excecutables/hall_request_assigner
+	ret, err := exec.Command("Assigner/Excecutables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
 		fmt.Println(string(ret))

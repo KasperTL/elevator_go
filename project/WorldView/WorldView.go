@@ -78,7 +78,7 @@ func syncOnRejon(
 
 	for elevator := 0; elevator < config.NumElevators; elevator++ {
 		for floor := 0; floor < config.NumFloors; floor++ {
-			for button := 0; button < config.NumButtons; button++ {
+			for button := 0; button < 2; button++ {
 
 				for peerID := range alivePeers {
 					peerState := localOrders[peerID][floor][button]
@@ -101,7 +101,7 @@ func updateHallOrders(
 ) [config.NumElevators][config.NumFloors][2]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumButtons; button++ {
+		for button := 0; button < 2; button++ {
 			currentOrderState := orders[NodeID][floor][button]
 			newOrderState := currentOrderState
 

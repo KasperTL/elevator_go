@@ -36,6 +36,7 @@ func Elevator_fsm(
 
 	elevio.SetMotorDirection(elevio.MD_Down)
 
+	ElevatorPrint(elevator)
 	for {
 		select {
 		case floor := <-newFloorC:

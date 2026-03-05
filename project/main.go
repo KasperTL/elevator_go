@@ -5,6 +5,7 @@ import (
 	"fmt"
 	assigner "project/Assigner"
 	"project/ElevatorDriver"
+	"project/Network/bcast"
 	"project/Network/peers"
 	"project/WorldView"
 	"project/config"
@@ -17,8 +18,8 @@ var id int
 
 func main() {
 
-	port := flag.Int("port", 15657, "UDP port to use for communication"+"<--Default value, override with command line argument -port=xxxxx")
-	ElevatorId := flag.Int("id", 0, "Unique ID for this elevator"+"<--Default value, override with command line argument -id=xxxxx")
+	port := flag.Int("port", 15657, "<--Default value, override with command line argument -port=xxxxx")
+	ElevatorId := flag.Int("id", 0, "<--Default value, override with command line argument -id=xxxxx")
 
 	flag.Parse()
 
@@ -26,7 +27,7 @@ func main() {
 	id = *ElevatorId
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
-
+	
 	fmt.Println("Elevator initialized with id", id, "on port", Port)
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
 
@@ -41,6 +42,10 @@ func main() {
 
 	networkTx := make(chan WorldView.WorldView, config.Buffer)
 	networkRx := make(chan WorldView.WorldView, config.Buffer)
+
+	go bcast.Transmitter(Port, networkTx)
+	go bcast.Receiver(Port, networkRx)
+
 	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
 	orderComplete := make(chan elevio.ButtonEvent, config.Buffer)
 	orderConfirmed := make(chan elevio.ButtonEvent, config.Buffer)
@@ -68,7 +73,10 @@ func main() {
 		}
 	}()
 
-	go ElevatorDriver.Elevator_fsm(newOrder, newLocalElevatorState, orderComplete)
+	go ElevatorDriver.Elevator_fsm(
+		newOrder,
+		newLocalElevatorState,
+		orderComplete)
 
 	go WorldView.WorldViewManager(
 		networkRx,
