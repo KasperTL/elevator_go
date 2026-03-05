@@ -8,14 +8,13 @@ import (
 )
 
 func WorldViewManager(
-	networkRx <-chan WorldView,
-	networkTx chan<- WorldView,
+	networkRx             <-chan WorldView,
+	networkTx             chan<- WorldView,
 	newLocalElevatorState <-chan ElevatorDriver.Elevator,
-	orderComplete <-chan elevio.ButtonEvent,
-	orderConfirmed chan<- elevio.ButtonEvent,
-	worldViewOut chan<- WorldView,
-	alivePeersInput <-chan []int,
-	myNodeID int,
+	orderComplete         <-chan elevio.ButtonEvent,
+	worldViewOut          chan<- WorldView,
+	alivePeersInput       <-chan []int,
+	myNodeID              int,
 ) {
 
 	myWorldView := InitWorldView(myNodeID)
@@ -90,7 +89,7 @@ func WorldViewManager(
 		case order := <-orderComplete:
 			fmt.Println("Order complete:", order)
 			if order.Button == elevio.BT_Cab {
-				myWorldView.ElevatorStates[myNodeID].CabOrders[order.Button] = false
+				myWorldView.ElevatorStates[myNodeID].CabOrders[order.Floor] = false
 				elevio.SetButtonLamp(order.Button, order.Floor, false)
 				worldViewOut <- myWorldView
 				//continue

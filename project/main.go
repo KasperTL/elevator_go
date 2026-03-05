@@ -49,13 +49,15 @@ func main() {
 
 	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
 	orderComplete := make(chan elevio.ButtonEvent, config.Buffer)
-	orderConfirmed := make(chan elevio.ButtonEvent, config.Buffer)
+
 	alivePeersInput := make(chan []int, config.Buffer)
 
 	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
 	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
 
 	// Convert PeerUpdate strings to []int since alivePeersInput is an expected int
+
+	
 	go func() {
 		for peerUpdate := range peersRx {
 			aliveIDs := []int{}
@@ -84,7 +86,6 @@ func main() {
 		networkTx,
 		newLocalElevatorState,
 		orderComplete,
-		orderConfirmed,
 		worldViewOut,
 		alivePeersInput,
 		id)
