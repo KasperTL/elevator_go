@@ -1,6 +1,7 @@
 package WorldView
 
 import (
+	"fmt"
 	"project/ElevatorDriver"
 	"project/config"
 	"project/elevio"
@@ -30,6 +31,33 @@ type WorldView struct {
 func InitWorldView(nodeID int) WorldView {
 	view := WorldView{SenderID: nodeID}
 	return view
+}
+
+func PrintHallOrders(wv WorldView) {
+	fmt.Println("\n=== Hall Orders ===")
+	for floor := 0; floor < config.NumFloors; floor++ {
+		fmt.Printf("Floor %d: ", floor)
+		for elevator := 0; elevator < config.NumElevators; elevator++ {
+			upState := orderStateToString(wv.HallOrders[elevator][floor][elevio.BT_HallUp])
+			downState := orderStateToString(wv.HallOrders[elevator][floor][elevio.BT_HallDown])
+			fmt.Printf("E%d[↑%s ↓%s] ", elevator, upState, downState)
+		}
+		fmt.Println()
+	}
+	fmt.Println()
+}
+
+func orderStateToString(state OrderState) string {
+	switch state {
+	case OrderIdle:
+		return "Idle"
+	case OrderPending:
+		return "Pend"
+	case OrderConfirmed:
+		return "Conf"
+	default:
+		return "?"
+	}
 }
 
 func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
@@ -124,7 +152,7 @@ func updateHallOrders(
 					newOrderState = OrderPending
 				}
 			case OrderPending:
-				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) && anyPeerAhead(peersOrderView, OrderConfirmed) {
+				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
 					newOrderState = OrderConfirmed
 				}
 			case OrderConfirmed:

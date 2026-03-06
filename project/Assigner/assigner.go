@@ -1,4 +1,4 @@
-package assigner
+package Assigner
 
 import (
 	"encoding/json"
@@ -60,7 +60,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Marshal error: ", err)
 		panic("json.Marshal error")
 	}
-	///home/student/sanntidgruppe_17/elevator_go/project/Assigner/Excecutables/hall_request_assigner
+
 	ret, err := exec.Command("Assigner/Excecutables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
@@ -76,4 +76,15 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 	}
 
 	return (*output)[strconv.Itoa(nodeID)]
+}
+
+func Assigner(
+	incomingC <-chan WorldView.WorldView,
+	assignedOrdersC chan<- ElevatorDriver.Orders,
+	myNodeId int,
+) {
+	for wv := range incomingC {
+		assignedOrders := CalculateOptimalOrders(wv, myNodeId)
+		assignedOrdersC <- assignedOrders
+	}
 }

@@ -19,7 +19,7 @@ func door_fsm(
 	doorObstructedC chan<- bool,
 	doorClosingC chan<- bool,
 ) {
-	obstructionC := make(chan bool)
+	obstructionC := make(chan bool, config.Buffer)
 	myDoorState := DS_Closed
 	doorIsObstructed := false
 	doorOpenTimer := time.NewTimer(config.DoorOpenDuration)
