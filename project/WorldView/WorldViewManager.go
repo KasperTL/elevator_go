@@ -1,7 +1,6 @@
 package WorldView
 
 import (
-	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -21,7 +20,6 @@ func WorldViewManager(
 ) {
 
 	myWorldView := InitWorldView(myNodeID)
-	myWorldView.AliveList[myNodeID] = true
 
 	orderRequest := make(chan elevio.ButtonEvent, config.Buffer)
 	go elevio.PollButtons(orderRequest)
@@ -36,18 +34,22 @@ func WorldViewManager(
 			networkTx <- myWorldView
 
 		case peers = <-peersC:
-			fmt.Println(peers)
+			 for _, peerIDstr := range peers.Peers {
+				peerID, err := strconv.Atoi(peerIDstr)
+				if err != nil {
+					continue
+				}
+				myWorldView.AliveList[peerID] = true
+    		}
+
 			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
 			if peerWorldView.SenderID == myNodeID {
 				continue
 			}
-			// print functions
-			// fmt.Printf("=== Received from Elevator %d ===\n", peerWorldView.SenderID)
-			// PrintHallOrders(peerWorldView)
 
-			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
+			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView) // this does not work, or get wrong in the assigner
 			myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, peers.Peers)
 			setHallOrderLights(myWorldView)
 			worldViewConfirmed <- myWorldView
