@@ -74,6 +74,10 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
+	// fmt.Printf("output: \n")
+    // for k, v := range *output {
+    //     fmt.Printf("%6v :  %+v\n", k, v)
+    // }
 
 	return (*output)[strconv.Itoa(nodeID)]
 }

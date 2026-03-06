@@ -44,8 +44,8 @@ func WorldViewManager(
 				continue
 			}
 			// print functions
-			fmt.Printf("=== Received from Elevator %d ===\n", peerWorldView.SenderID)
-			PrintHallOrders(peerWorldView)
+			// fmt.Printf("=== Received from Elevator %d ===\n", peerWorldView.SenderID)
+			// PrintHallOrders(peerWorldView)
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 			myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, peers.Peers)
@@ -53,7 +53,6 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case myElevatorState := <-newLocalElevatorState:
-
 			myWorldView.ElevatorStates[myNodeID].Elevator = myElevatorState
 			worldViewConfirmed <- myWorldView
 
@@ -118,6 +117,7 @@ func WorldViewManager(
 				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
 					myWorldView.HallOrders[myNodeID][comleteOrder.Floor][comleteOrder.Button] = OrderIdle
 					setHallOrderLights(myWorldView)
+					worldViewConfirmed <- myWorldView
 
 				} else {
 					continue

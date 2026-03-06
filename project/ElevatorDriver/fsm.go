@@ -32,12 +32,15 @@ func Elevator_fsm(
 		select {
 		case floor := <-newFloorC:
 			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, floor)
+			updatedElevatorState <- elevator
 
 		case <-doorClosingc:
 			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
+			updatedElevatorState <- elevator
 
 		case orders = <-newOrder:
 			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
+			//updatedElevatorState <- elevator
 
 		case <-elevatorMotorTimer.C:
 
@@ -48,6 +51,6 @@ func Elevator_fsm(
 			}
 
 		}
-		updatedElevatorState <- elevator
+
 	}
 }
