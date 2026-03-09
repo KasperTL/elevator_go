@@ -55,6 +55,10 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		}
 	}
 
+	if len(stateMap) == 0 {
+		return ElevatorDriver.Orders{}
+	}
+
 	input := HRAInput{hallOrders, stateMap}
 
 	jsonBytes, err := json.Marshal(input)
