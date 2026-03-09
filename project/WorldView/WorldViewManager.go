@@ -67,8 +67,10 @@ func WorldViewManager(
 				continue
 			}
 
+
 			switch myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] {
 			case OrderIdle:
+
 
 				var peersOrderView []OrderState
 				for _, peerIDstr := range peers.Peers {
