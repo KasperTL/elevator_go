@@ -45,8 +45,8 @@ func Elevator_fsm(
 		case <-elevatorMotorTimer.C:
 
 		case obstrucion := <-doorObstructedc:
-			if obstrucion != elevator.obstruction {
-				elevator.obstruction = obstrucion
+			if obstrucion != elevator.Obstruction {
+				elevator.Obstruction = obstrucion
 				updatedElevatorState <- elevator
 			}
 

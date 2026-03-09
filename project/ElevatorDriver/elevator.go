@@ -22,11 +22,11 @@ const (
 )
 
 type Elevator struct {
-	floor       int
-	direction   ElevatorDirection
-	behaviour   ElevatorBehaviour
-	obstruction bool
-	motorStop   bool
+	Floor       int
+	Direction   ElevatorDirection
+	Behaviour   ElevatorBehaviour
+	Obstruction bool
+	MotorStop   bool
 }
 
 func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
@@ -69,9 +69,9 @@ func StateToString(b ElevatorBehaviour) string {
 
 func ElevatorPrint(e Elevator) {
 	fmt.Printf("  +--------------------+\n")
-	fmt.Printf("  |floor = %-2d          |\n", e.floor)
-	fmt.Printf("  |Direction  = %-12s|\n", DirnToString(e.direction))
-	fmt.Printf("  |Behaviour = %-12s|\n", StateToString(e.behaviour))
+	fmt.Printf("  |floor = %-2d          |\n", e.GetFloor())
+	fmt.Printf("  |Direction  = %-12s|\n", DirnToString(e.GetDirection()))
+	fmt.Printf("  |Behaviour = %-12s|\n", StateToString(e.GetBehaviour()))
 	fmt.Printf("  +--------------------+\n")
 	fmt.Printf("  |  Up  | Down |  Cab |\n")
 
@@ -102,18 +102,18 @@ func InitializeElevator() Elevator {
 		}
 	}
 	return Elevator{
-		floor:     elevatorFloor,
-		direction: ED_Down,
-		behaviour: EB_Idle,
+		Floor:     elevatorFloor,
+		Direction: ED_Down,
+		Behaviour: EB_Idle,
 	}
 }
 
 // Getters
-func (e Elevator) GetFloor() int                   { return e.floor }
-func (e Elevator) GetDirection() ElevatorDirection { return e.direction }
-func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.behaviour }
-func (e Elevator) GetMotorStop() bool              { return e.motorStop }
-func (e Elevator) GetObstructed() bool             { return e.obstruction }
+func (e Elevator) GetFloor() int                   { return e.Floor }
+func (e Elevator) GetDirection() ElevatorDirection { return e.Direction }
+func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.Behaviour }
+func (e Elevator) GetMotorStop() bool              { return e.MotorStop }
+func (e Elevator) GetObstructed() bool             { return e.Obstruction }
 
 func (ed ElevatorDirection) toMD() elevio.MotorDirection {
 	switch ed {

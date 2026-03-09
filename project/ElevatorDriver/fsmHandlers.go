@@ -13,26 +13,26 @@ func handleNewOrder(
 	elevatorMotorTimer *time.Timer,
 ) {
 
-	switch elevator.behaviour {
+	switch elevator.Behaviour {
 
 	case EB_Idle:
 
-		if orderAtFloorInDirection(elevator.floor, elevator.direction, orders) || cabOrderAtFloor(elevator.floor, orders) {
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
 			stopAndOpenDoor(elevator, openDoorC)
-			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
-		if orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) {
+		if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
 			stopAndOpenDoor(elevator, openDoorC)
-			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
-		if orderInDirection(elevator.floor, elevator.direction, orders) {
+		if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 			startMoving(elevator, elevatorMotorTimer)
 			return
 		}
-		if orderInOppositeDirection(elevator.floor, elevator.direction, orders) {
+		if orderInOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
 			startMoving(elevator, elevatorMotorTimer)
 			return
@@ -42,9 +42,9 @@ func handleNewOrder(
 
 	case EB_DoorOpen:
 
-		if orderAtFloorInDirection(elevator.floor, elevator.direction, orders) || cabOrderAtFloor(elevator.floor, orders) {
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
 			stopAndOpenDoor(elevator, openDoorC)
-			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 
@@ -66,38 +66,38 @@ func handleFloorArrival(
 	floor int,
 ) {
 	elevio.SetFloorIndicator(floor)
-	elevator.floor = floor
+	elevator.Floor = floor
 
-	if elevator.behaviour != EB_Moving {
+	if elevator.Behaviour != EB_Moving {
 		//panic("Floor arrival in non-moving state")
 		return
 	}
 
-	if orderAtFloorInDirection(elevator.floor, elevator.direction, orders) || cabOrderAtFloor(elevator.floor, orders) {
+	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
 		// TODO
 		// This is toooooooo long, need to fix
-		if !orderInDirection(elevator.floor, elevator.direction, orders) && orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) && !orderAtFloorInDirection(elevator.floor, elevator.direction, orders) {
+		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
 			stopAndOpenDoor(elevator, openDoorC)
 			reverseDirection(elevator)
-			clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		}
 		stopAndOpenDoor(elevator, openDoorC)
-		clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
 
-	if orderInDirection(elevator.floor, elevator.direction, orders) {
+	if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 		return
 	}
 
-	if orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) {
+	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		stopAndOpenDoor(elevator, openDoorC)
 		reverseDirection(elevator)
-		clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
 
-	if orderInOppositeDirection(elevator.floor, elevator.direction, orders) {
+	if orderInOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
 		startMoving(elevator, elevatorMotorTimer)
 		return
@@ -114,23 +114,23 @@ func handleDoorClosing(
 	elevatorMotorTimer *time.Timer,
 ) {
 
-	if elevator.behaviour != EB_DoorOpen {
+	if elevator.Behaviour != EB_DoorOpen {
 		panic("Door closed while not open")
 	}
 
-	if orderInDirection(elevator.floor, elevator.direction, orders) {
+	if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 		startMoving(elevator, elevatorMotorTimer)
 		return
 	}
 
-	if orderAtFloorOppositeDirection(elevator.floor, elevator.direction, orders) {
+	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
 		stopAndOpenDoor(elevator, openDoorC)
-		clearOrderAtFloor(elevator.floor, elevator.direction, orders, deliveredOrder)
+		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
 
-	if orderInOppositeDirection(elevator.floor, elevator.direction, orders) {
+	if orderInOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
 		startMoving(elevator, elevatorMotorTimer)
 		return
