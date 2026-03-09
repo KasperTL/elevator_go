@@ -35,25 +35,27 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		panic("OS not supported")
 	}
 
+	hallOrders := WorldView.HallOrdersAsBool(wv.Orders[nodeID])
+	cabOrders := WorldView.CabOrdersAsBool(wv.Orders[nodeID])
+
 	stateMap := make(map[string]HRAElevState)
-	for i, e := range wv.ElevatorStates {
+	for i, elevator := range wv.ElevatorStates {
 		if !wv.AliveList[i] {
 			continue
 		}
-		if e.Elevator.GetObstructed() || e.Elevator.GetMotorStop() {
+		if elevator.GetObstructed() || elevator.GetMotorStop() {
 			continue
 		} else {
 			stateMap[strconv.Itoa(i)] = HRAElevState{
-				Behaviour:   ElevatorDriver.StateToString(e.Elevator.GetBehaviour()),
-				Floor:       e.Elevator.GetFloor(),
-				Direction:   ElevatorDriver.DirnToString(e.Elevator.GetDirection()),
-				CabRequests: e.CabOrders,
+				Behaviour:   ElevatorDriver.StateToString(elevator.GetBehaviour()),
+				Floor:       elevator.GetFloor(),
+				Direction:   ElevatorDriver.DirnToString(elevator.GetDirection()),
+				CabRequests: cabOrders,
 			}
 		}
 	}
-	
-	orders := WorldView.FromOrderStateToBool(wv.HallOrders[nodeID])
-	input := HRAInput{orders, stateMap}
+
+	input := HRAInput{hallOrders, stateMap}
 
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
@@ -74,9 +76,9 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		panic("json.Unmarshal error")
 	}
 	// fmt.Printf("output: \n")
-    // for k, v := range *output {
-    //     fmt.Printf("%6v :  %+v\n", k, v)
-    // }
+	// for k, v := range *output {
+	//     fmt.Printf("%6v :  %+v\n", k, v)
+	// }
 
 	return (*output)[strconv.Itoa(nodeID)]
 }
@@ -91,7 +93,6 @@ func Assigner(
 		assignedOrdersC <- assignedOrders
 	}
 }
-
 
 // func PrintHRAInput(input HRAInput) {
 //     prettyJSON, err := json.MarshalIndent(input, "", "  ")
