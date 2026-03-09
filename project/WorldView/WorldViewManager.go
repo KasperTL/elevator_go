@@ -41,7 +41,7 @@ func WorldViewManager(
 					continue
 				}
 				myWorldView.AliveList[peerID] = true
-    		}
+			}
 
 			worldViewConfirmed <- myWorldView
 
@@ -51,25 +51,17 @@ func WorldViewManager(
 			}
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView) // this does not work, or get wrong in the assigner
-			myWorldView.HallOrders = updateHallOrders(myWorldView.HallOrders, myNodeID, peers.Peers)
-			setHallOrderLights(myWorldView)
+			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
+			setOrderLights(myWorldView)
 			worldViewConfirmed <- myWorldView
 
 		case myElevatorState := <-newLocalElevatorState:
-			myWorldView.ElevatorStates[myNodeID].Elevator = myElevatorState
+			myWorldView.ElevatorStates[myNodeID] = myElevatorState
 			worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
 
-			if newOrder.Button == elevio.BT_Cab {
-				myWorldView.ElevatorStates[myNodeID].CabOrders[newOrder.Floor] = true
-				elevio.SetButtonLamp(elevio.BT_Cab, newOrder.Floor, true)
-				worldViewConfirmed <- myWorldView
-				continue
-			}
-
-
-			switch myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] {
+			switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
 			case OrderIdle:
 
 
@@ -80,12 +72,12 @@ func WorldViewManager(
 						continue
 					}
 					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.HallOrders[peerID][newOrder.Floor][newOrder.Button])
+						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][newOrder.Button])
 					}
 				}
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
-					myWorldView.HallOrders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
+					myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
 				} else {
 					continue
 				}
@@ -98,14 +90,7 @@ func WorldViewManager(
 
 		case comleteOrder := <-orderComplete:
 
-			if comleteOrder.Button == elevio.BT_Cab {
-				myWorldView.ElevatorStates[myNodeID].CabOrders[comleteOrder.Floor] = false
-				elevio.SetButtonLamp(comleteOrder.Button, comleteOrder.Floor, false)
-				worldViewConfirmed <- myWorldView
-				continue
-			}
-
-			switch myWorldView.HallOrders[myNodeID][comleteOrder.Floor][comleteOrder.Button] {
+			switch myWorldView.Orders[myNodeID][comleteOrder.Floor][comleteOrder.Button] {
 			case OrderConfirmed:
 
 				var peersOrderView []OrderState
@@ -115,13 +100,13 @@ func WorldViewManager(
 						continue
 					}
 					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.HallOrders[peerID][comleteOrder.Floor][comleteOrder.Button])
+						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][comleteOrder.Floor][comleteOrder.Button])
 					}
 				}
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
-					myWorldView.HallOrders[myNodeID][comleteOrder.Floor][comleteOrder.Button] = OrderIdle
-					setHallOrderLights(myWorldView)
+					myWorldView.Orders[myNodeID][comleteOrder.Floor][comleteOrder.Button] = OrderIdle
+					setOrderLights(myWorldView)
 					worldViewConfirmed <- myWorldView
 
 				} else {
