@@ -25,6 +25,7 @@ type WorldView struct {
 
 func InitWorldView(nodeID int) WorldView {
 	view := WorldView{SenderID: nodeID}
+	view.AliveList[nodeID] = true
 	return view
 }
 

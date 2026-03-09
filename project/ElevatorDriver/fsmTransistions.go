@@ -8,24 +8,24 @@ import (
 
 
 func startMoving(elevator *Elevator, timer *time.Timer) {
-	elevator.behaviour = EB_Moving
-	elevio.SetMotorDirection(elevator.direction.toMD()) //Migh want to use a channel for this instead
+	elevator.Behaviour = EB_Moving
+	elevio.SetMotorDirection(elevator.Direction.toMD()) //Migh want to use a channel for this instead
 	timer.Reset(config.ElevatorMotorTime)
 }
 
 
 func stopAndOpenDoor(elevator *Elevator, openDoorC chan<- bool) {
-	elevator.behaviour = EB_DoorOpen
+	elevator.Behaviour = EB_DoorOpen
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	openDoorC <- true
 }
 
 func enterIdle(elevator *Elevator) {
-	elevator.behaviour = EB_Idle
+	elevator.Behaviour = EB_Idle
 	elevio.SetMotorDirection(elevio.MD_Stop)
 }
 
 func reverseDirection(elevator *Elevator) {
-	elevator.direction = oppositeDirection(elevator.direction)
+	elevator.Direction = oppositeDirection(elevator.Direction)
 }
 
