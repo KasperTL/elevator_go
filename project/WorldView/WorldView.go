@@ -20,7 +20,7 @@ type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
-	Orders         [config.NumElevators][config.NumFloors][config.NumButtons]OrderState
+	Orders         [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState
 }
 
 func InitWorldView(nodeID int) WorldView {
@@ -120,13 +120,13 @@ func syncOnRejon(
 	return localOrders
 }
 func updateOrders(
-	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+	orders [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState,
 	NodeID int,
 	alivePeers []string,
-) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
+) [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumButtons; button++ {
+		for button := 0; button < 2+config.NumElevators; button++ {
 			currentOrderState := orders[NodeID][floor][button]
 			newOrderState := currentOrderState
 
@@ -166,19 +166,18 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 	myWorldView.ElevatorStates[peerWorldView.SenderID] = peerWorldView.ElevatorStates[peerWorldView.SenderID]
 	myWorldView.AliveList[peerWorldView.SenderID] = peerWorldView.AliveList[peerWorldView.SenderID]
 	myWorldView.Orders[peerWorldView.SenderID] = peerWorldView.Orders[peerWorldView.SenderID]
-
 	return myWorldView
 }
 
-func CabOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState) [config.NumFloors]bool {
+func CabOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
-		cabOrders[floor] = Orders[floor][elevio.BT_Cab] == OrderConfirmed
+		cabOrders[floor] = Orders[floor][2+nodeID] == OrderConfirmed
 	}
 	return cabOrders
 }
 
-func HallOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState) [config.NumFloors][2]bool {
+func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState) [config.NumFloors][2]bool {
 	var hallOrders [config.NumFloors][2]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
 		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderConfirmed

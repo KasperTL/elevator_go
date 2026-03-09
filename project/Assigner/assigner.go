@@ -36,7 +36,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 	}
 
 	hallOrders := WorldView.HallOrdersAsBool(wv.Orders[nodeID])
-	cabOrders := WorldView.CabOrdersAsBool(wv.Orders[nodeID])
+	cabOrders := WorldView.CabOrdersAsBool(wv.Orders[nodeID], nodeID)
 
 	stateMap := make(map[string]HRAElevState)
 	for i, elevator := range wv.ElevatorStates {

@@ -50,7 +50,7 @@ func WorldViewManager(
 				continue
 			}
 
-			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView) // this does not work, or get wrong in the assigner
+			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
 			setOrderLights(myWorldView)
 			worldViewConfirmed <- myWorldView
@@ -63,7 +63,6 @@ func WorldViewManager(
 
 			switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
 			case OrderIdle:
-
 
 				var peersOrderView []OrderState
 				for _, peerIDstr := range peers.Peers {
