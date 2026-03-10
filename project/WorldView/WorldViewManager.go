@@ -87,7 +87,7 @@ func WorldViewManager(
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
 					myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
-
+					fmt.Println("Order set to pending")
 				} else {
 					continue
 				}
