@@ -65,8 +65,10 @@ func WorldViewManager(
 			var buttonValue int
 			if newOrder.Button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
+				fmt.Println("Cab order")
 			} else {
 				buttonValue = int(newOrder.Button)
+				fmt.Println("Hall order")
 			}
 
 			switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
