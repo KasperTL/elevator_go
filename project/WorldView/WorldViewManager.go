@@ -62,8 +62,14 @@ func WorldViewManager(
 
 		case newOrder := <-orderRequest:
 			fmt.Println("New order received", newOrder)
+			var buttonValue int
+			if newOrder.Button == elevio.BT_Cab {
+				buttonValue = 2 + myNodeID
+			} else {
+				buttonValue = int(newOrder.Button)
+			}
 
-			switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
+			switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
 			case OrderIdle:
 
 				var peersOrderView []OrderState
@@ -89,9 +95,16 @@ func WorldViewManager(
 				continue
 			}
 
-		case comleteOrder := <-orderComplete:
+		case completeOrder := <-orderComplete:
 
-			switch myWorldView.Orders[myNodeID][comleteOrder.Floor][comleteOrder.Button] {
+			var buttonValue int
+			if completeOrder.Button == elevio.BT_Cab {
+				buttonValue = 2 + myNodeID
+			} else {
+				buttonValue = int(completeOrder.Button)
+			}
+
+			switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
 			case OrderConfirmed:
 
 				var peersOrderView []OrderState
@@ -101,12 +114,12 @@ func WorldViewManager(
 						continue
 					}
 					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][comleteOrder.Floor][comleteOrder.Button])
+						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][completeOrder.Floor][buttonValue])
 					}
 				}
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
-					myWorldView.Orders[myNodeID][comleteOrder.Floor][comleteOrder.Button] = OrderIdle
+					myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
 					setOrderLights(myWorldView)
 					worldViewConfirmed <- myWorldView
 
