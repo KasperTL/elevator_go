@@ -81,12 +81,13 @@ func WorldViewManager(
 						continue
 					}
 					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][newOrder.Button])
+						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][buttonValue])
 					}
 				}
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
-					myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] = OrderPending
+					myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
+
 				} else {
 					continue
 				}
