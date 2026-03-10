@@ -1,6 +1,7 @@
 package WorldView
 
 import (
+	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -60,6 +61,7 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
+			fmt.Println("New order received", newOrder)
 
 			switch myWorldView.Orders[myNodeID][newOrder.Floor][newOrder.Button] {
 			case OrderIdle:
