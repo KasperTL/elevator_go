@@ -61,14 +61,11 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
-			fmt.Println("New order received", newOrder)
 			var buttonValue int
 			if newOrder.Button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
-				fmt.Println("Cab order")
 			} else {
 				buttonValue = int(newOrder.Button)
-				fmt.Println("Hall order")
 			}
 
 			switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
@@ -87,7 +84,6 @@ func WorldViewManager(
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
 					myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
-					fmt.Println("Order set to pending")
 				} else {
 					continue
 				}
@@ -97,15 +93,20 @@ func WorldViewManager(
 			case OrderConfirmed:
 				continue
 			}
+			setOrderLights(myWorldView)
+			worldViewConfirmed <- myWorldView
 
 		case completeOrder := <-orderComplete:
-
+			fmt.Println("Order complete")
 			var buttonValue int
 			if completeOrder.Button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
 			} else {
 				buttonValue = int(completeOrder.Button)
+
 			}
+
+			fmt.Println(myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue])
 
 			switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
 			case OrderConfirmed:
