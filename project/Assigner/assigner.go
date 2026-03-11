@@ -70,7 +70,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 	}
 
 	input := HRAInput{hallOrders, stateMap}
-
+	PrintHRAInput(input)
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		fmt.Println("json.Marshal error: ", err)
@@ -105,23 +105,17 @@ func Assigner(
 ) {
 	for wv := range incomingC {
 		assignedOrders := CalculateOptimalOrders(wv, myNodeId)
-		for floor := 0; floor < config.NumFloors; floor++ {
-			for btn := 0; btn < 2; btn++ {
-				if assignedOrders[floor][btn] {
-					fmt.Printf("Assigned order at floor %d button %d\n", floor, btn)
-				}
-			}
-		}
+
 		assignedOrdersC <- assignedOrders
 	}
 }
 
-// func PrintHRAInput(input HRAInput) {
-//     prettyJSON, err := json.MarshalIndent(input, "", "  ")
-//     if err != nil {
-//         fmt.Println("Error formatting JSON:", err)
-//         return
-//     }
-//     fmt.Println("=== HRA Input ===")
-//     fmt.Println(string(prettyJSON))
-// }
+func PrintHRAInput(input HRAInput) {
+	prettyJSON, err := json.MarshalIndent(input, "", "  ")
+	if err != nil {
+		fmt.Println("Error formatting JSON:", err)
+		return
+	}
+	fmt.Println("=== HRA Input ===")
+	fmt.Println(string(prettyJSON))
+}
