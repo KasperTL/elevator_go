@@ -189,7 +189,13 @@ func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderSta
 func setOrderLights(myWorldView WorldView, myNodeID int) {
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumButtons; button++ {
-			orderState := myWorldView.Orders[myNodeID][floor][2+myNodeID]
+			var buttonValue int
+			if button <= 2 {
+				buttonValue = button
+			} else {
+				buttonValue = 2 + myNodeID
+			}
+			orderState := myWorldView.Orders[myNodeID][floor][buttonValue]
 			buttonType := elevio.ButtonType(button)
 			switch orderState {
 			case OrderConfirmed:
