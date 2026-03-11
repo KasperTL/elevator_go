@@ -29,6 +29,8 @@ func WorldViewManager(
 
 	heartbeat := time.NewTicker(config.HeartbeatTime)
 
+	var online bool
+
 	for {
 		select {
 		case <-heartbeat.C:
@@ -37,6 +39,13 @@ func WorldViewManager(
 		case peers = <-peersC:
 			myWorldView.AliveList = [config.NumElevators]bool{}
 			myWorldView.AliveList[myNodeID] = true
+
+			if len(peers.Peers) > 0 {
+				online = true
+			} else {
+				online = false
+			}
+
 			for _, peerIDstr := range peers.Peers {
 				peerID, err := strconv.Atoi(peerIDstr)
 				if err != nil {
@@ -58,6 +67,10 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
+
+			if peerWorldView.SenderID == myNodeID {
+				continue
+			}
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 
@@ -99,30 +112,39 @@ func WorldViewManager(
 				buttonValue = int(newOrder.Button)
 			}
 
-			switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
-			case OrderIdle:
+			switch online {
+			case true:
+				switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
+				case OrderIdle:
 
-				var peersOrderView []OrderState
-				for _, peerIDstr := range peers.Peers {
-					peerID, err := strconv.Atoi(peerIDstr)
-					if err != nil {
+					var peersOrderView []OrderState
+					for _, peerIDstr := range peers.Peers {
+						peerID, err := strconv.Atoi(peerIDstr)
+						if err != nil {
+							continue
+						}
+						if peerID != myNodeID {
+							peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][buttonValue])
+						}
+					}
+
+					if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
+						myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
+					} else {
 						continue
 					}
-					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][buttonValue])
-					}
-				}
 
-				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
-					myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
-				} else {
+				case OrderPending:
+					continue
+				case OrderConfirmed:
 					continue
 				}
 
-			case OrderPending:
-				continue
-			case OrderConfirmed:
-				continue
+			case false:
+				myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderConfirmed
+				setOrderLights(myWorldView, myNodeID)
+				worldViewConfirmed <- myWorldView
+
 			}
 
 		case completeOrder := <-orderComplete:
@@ -134,35 +156,42 @@ func WorldViewManager(
 
 			}
 
-			switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
-			case OrderConfirmed:
+			switch online {
+			case true:
 
-				var peersOrderView []OrderState
-				for _, peerIDstr := range peers.Peers {
-					peerID, err := strconv.Atoi(peerIDstr)
-					if err != nil {
+				switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
+				case OrderConfirmed:
+
+					var peersOrderView []OrderState
+					for _, peerIDstr := range peers.Peers {
+						peerID, err := strconv.Atoi(peerIDstr)
+						if err != nil {
+							continue
+						}
+						if peerID != myNodeID {
+							peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][completeOrder.Floor][buttonValue])
+						}
+					}
+
+					if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
+						myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
+						setOrderLights(myWorldView, myNodeID)
+						worldViewConfirmed <- myWorldView
+
+					} else {
 						continue
 					}
-					if peerID != myNodeID {
-						peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][completeOrder.Floor][buttonValue])
-					}
-				}
 
-				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
-					myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
-					setOrderLights(myWorldView, myNodeID)
-					worldViewConfirmed <- myWorldView
-
-				} else {
+				case OrderPending:
+					continue
+				case OrderIdle:
 					continue
 				}
-
-			case OrderPending:
-				continue
-			case OrderIdle:
-				continue
+			case false:
+				myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
+				setOrderLights(myWorldView, myNodeID)
+				worldViewConfirmed <- myWorldView
 			}
-
 		}
 	}
 }
