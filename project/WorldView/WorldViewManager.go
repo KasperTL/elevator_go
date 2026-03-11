@@ -52,7 +52,7 @@ func WorldViewManager(
 				}
 			}
 
-			fmt.Println("New peer: ", peers.New)
+			fmt.Println("PeersC: ", peers)
 			// need to reset my view of the lost elevators.
 
 			worldViewConfirmed <- myWorldView
