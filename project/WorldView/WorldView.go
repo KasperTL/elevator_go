@@ -190,10 +190,10 @@ func setOrderLights(myWorldView WorldView, myNodeID int) {
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumButtons; button++ {
 			var buttonValue int
-			if button <= 2 {
-				buttonValue = button
-			} else {
+			if button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
+			} else {
+				buttonValue = button
 			}
 			orderState := myWorldView.Orders[myNodeID][floor][buttonValue]
 			buttonType := elevio.ButtonType(button)
