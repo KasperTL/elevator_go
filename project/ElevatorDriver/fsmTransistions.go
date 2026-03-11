@@ -14,15 +14,17 @@ func startMoving(elevator *Elevator, timer *time.Timer) {
 }
 
 
-func stopAndOpenDoor(elevator *Elevator, openDoorC chan<- bool) {
+func stopAndOpenDoor(elevator *Elevator, openDoorC chan<- bool, timer *time.Timer) {
 	elevator.Behaviour = EB_DoorOpen
 	elevio.SetMotorDirection(elevio.MD_Stop)
 	openDoorC <- true
+	timer.Stop()
 }
 
-func enterIdle(elevator *Elevator) {
+func enterIdle(elevator *Elevator, timer *time.Timer) {
 	elevator.Behaviour = EB_Idle
 	elevio.SetMotorDirection(elevio.MD_Stop)
+	timer.Stop()
 }
 
 func reverseDirection(elevator *Elevator) {

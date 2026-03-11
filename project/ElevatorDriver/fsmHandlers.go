@@ -18,13 +18,13 @@ func handleNewOrder(
 	case EB_Idle:
 
 		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC)
+			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 		if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
-			stopAndOpenDoor(elevator, openDoorC)
+			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
@@ -38,12 +38,12 @@ func handleNewOrder(
 			return
 		}
 
-		enterIdle(elevator)
+		enterIdle(elevator, elevatorMotorTimer)
 
 	case EB_DoorOpen:
 
 		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC)
+			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
@@ -77,11 +77,11 @@ func handleFloorArrival(
 		// TODO
 		// This is toooooooo long, need to fix
 		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
-			stopAndOpenDoor(elevator, openDoorC)
+			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			reverseDirection(elevator)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		}
-		stopAndOpenDoor(elevator, openDoorC)
+		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
@@ -91,7 +91,7 @@ func handleFloorArrival(
 	}
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
-		stopAndOpenDoor(elevator, openDoorC)
+		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 		reverseDirection(elevator)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
@@ -103,7 +103,7 @@ func handleFloorArrival(
 		return
 	}
 
-	enterIdle(elevator)
+	enterIdle(elevator, elevatorMotorTimer)
 }
 
 func handleDoorClosing(
@@ -125,7 +125,7 @@ func handleDoorClosing(
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
-		stopAndOpenDoor(elevator, openDoorC)
+		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
@@ -136,5 +136,5 @@ func handleDoorClosing(
 		return
 	}
 
-	enterIdle(elevator)
+	enterIdle(elevator, elevatorMotorTimer)
 }
