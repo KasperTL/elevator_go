@@ -32,6 +32,7 @@ func Elevator_fsm(
 		select {
 		case floor := <-newFloorC:
 			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, floor)
+			elevator.MotorStop = false
 			updatedElevatorState <- elevator
 
 		case <-doorClosingc:
@@ -43,6 +44,8 @@ func Elevator_fsm(
 			//updatedElevatorState <- elevator
 
 		case <-elevatorMotorTimer.C:
+			elevator.MotorStop = true
+			updatedElevatorState <- elevator
 
 		case obstrucion := <-doorObstructedc:
 			if obstrucion != elevator.Obstruction {
