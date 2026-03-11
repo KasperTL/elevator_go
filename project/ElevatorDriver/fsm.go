@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
@@ -44,6 +45,7 @@ func Elevator_fsm(
 			//updatedElevatorState <- elevator
 
 		case <-elevatorMotorTimer.C:
+			fmt.Println("Gets motorstop")
 			elevator.MotorStop = true
 			updatedElevatorState <- elevator
 
