@@ -1,6 +1,7 @@
 package WorldView
 
 import (
+	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -50,6 +51,7 @@ func WorldViewManager(
 				}
 			}
 
+			fmt.Println("New peer: ", peers.New )
 			// need to reset my view of the lost elevators. 
 
 			worldViewConfirmed <- myWorldView
