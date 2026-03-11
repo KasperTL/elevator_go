@@ -105,6 +105,13 @@ func Assigner(
 ) {
 	for wv := range incomingC {
 		assignedOrders := CalculateOptimalOrders(wv, myNodeId)
+		for floor := 0; floor < config.NumFloors; floor++ {
+			for btn := 0; btn < 2; btn++ {
+				if assignedOrders[floor][btn] {
+					fmt.Printf("Assigned order at floor %d button %d\n", floor, btn)
+				}
+			}
+		}
 		assignedOrdersC <- assignedOrders
 	}
 }
