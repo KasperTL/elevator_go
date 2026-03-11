@@ -2,9 +2,9 @@ package WorldView
 
 import (
 	"project/ElevatorDriver"
+	"project/Network/peers"
 	"project/config"
 	"project/elevio"
-	"project/Network/peers"
 	"strconv"
 )
 
@@ -16,18 +16,19 @@ const (
 	OrderConfirmed = 2
 )
 
-type WorldViewStatus int 
+type WorldViewStatus int
+
 const (
 	reconnectState = 0
-	nominal 	   = 1
+	nominal        = 1
 )
 
 type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
-	Status		   [config.NumElevators]WorldViewStatus 
+	Status         [config.NumElevators]WorldViewStatus
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
-	Orders         [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState
+	Orders         [config.NumElevators][config.NumFloors][config.NumButtons]OrderState
 }
 
 func InitWorldView(nodeID int) WorldView {
@@ -61,7 +62,7 @@ func amIOnline(peers peers.PeerUpdate) bool {
 	} else {
 		online = false
 	}
-	return online 
+	return online
 }
 
 func (wv *WorldView) areAllPeerWorlViewsNominal() bool {
@@ -74,7 +75,7 @@ func (wv *WorldView) areAllPeerWorlViewsNominal() bool {
 			}
 		}
 	}
-	return stable 
+	return stable
 }
 
 func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
@@ -111,53 +112,53 @@ func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
 }
 
 func syncOnRejon(
-	localOrders [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState,
+	localOrders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
 	myNodeID int,
 	peerID int,
-) [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState {
+) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < 2 + config.NumElevators; button++ {
-			 if isPeerAhead(localOrders[peerID][floor][button], localOrders[myNodeID][floor][button]) {
+		for button := 0; button < config.NumButtons; button++ {
+			if isPeerAhead(localOrders[peerID][floor][button], localOrders[myNodeID][floor][button]) {
 				localOrders[myNodeID][floor][button] = localOrders[peerID][floor][button]
-			 }
+			}
 		}
 	}
 	return localOrders
 }
 
 func isHallOrdersConsistent(
-	orders [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState,
+	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
 	alivePeers [config.NumElevators]bool,
 ) bool {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < 2 + config.NumElevators; button++ {
-			
+		for button := 0; button < config.NumButtons; button++ {
+
 			var peersOrderView []OrderState
-			for peerID, alive:= range alivePeers {
+			for peerID, alive := range alivePeers {
 				if alive {
 					peersOrderView = append(peersOrderView, orders[peerID][floor][button])
 				}
 			}
-			 if len(peersOrderView) == 0 {
-                continue
-            }
-            for _, state := range peersOrderView[1:] {
-                if state != peersOrderView[0] {
-                    return false
-                }
-            }
+			if len(peersOrderView) == 0 {
+				continue
+			}
+			for _, state := range peersOrderView[1:] {
+				if state != peersOrderView[0] {
+					return false
+				}
+			}
 		}
 	}
 	return true
 }
 
 func updateOrders(
-	orders [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState,
+	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
 	NodeID int,
 	alivePeers []string,
-) [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState {
+) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < 2+config.NumElevators; button++ {
@@ -204,7 +205,7 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 	return myWorldView
 }
 
-func CabOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState, nodeID int) [config.NumFloors]bool {
+func CabOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
 		cabOrders[floor] = Orders[floor][2+nodeID] == OrderConfirmed
@@ -212,7 +213,7 @@ func CabOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderStat
 	return cabOrders
 }
 
-func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState) [config.NumFloors][2]bool {
+func HallOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState) [config.NumFloors][2]bool {
 	var hallOrders [config.NumFloors][2]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
 		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderConfirmed
@@ -223,7 +224,7 @@ func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderSta
 
 func setOrderLights(myWorldView WorldView, myNodeID int) {
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumButtons; button++ {
+		for button := 0; button < 3; button++ {
 			var buttonValue int
 			if button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID

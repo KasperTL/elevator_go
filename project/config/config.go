@@ -7,7 +7,9 @@ import (
 const (
 	NumFloors       = 4
 	NumElevators    = 3
-	NumButtons      = 3
+
+	// Number of distinct order buttons
+	NumButtons      = 2 + NumElevators 
 	PeersPortNumber = 58735
 	BcastPortNumber = 58750
 	Buffer          = 1024
