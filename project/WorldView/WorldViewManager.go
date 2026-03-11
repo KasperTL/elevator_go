@@ -35,8 +35,8 @@ func WorldViewManager(
 			networkTx <- myWorldView
 
 		case peers = <-peersC:
-			fmt.Println("HEI")
 			myWorldView.AliveList = [config.NumElevators]bool{}
+			myWorldView.AliveList[myNodeID] = true
 			for _, peerIDstr := range peers.Peers {
 				peerID, err := strconv.Atoi(peerIDstr)
 				if err != nil {
