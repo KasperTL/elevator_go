@@ -164,7 +164,6 @@ func updateOrders(
 			case OrderPending:
 				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
 					newOrderState = OrderConfirmed
-					fmt.Println("Setter state til confirmed")
 				}
 			case OrderConfirmed:
 				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView, OrderIdle) {
@@ -202,10 +201,16 @@ func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderSta
 	return hallOrders
 }
 
-func setOrderLights(myWorldView WorldView) {
+func setOrderLights(myWorldView WorldView, myNodeID int) {
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumButtons; button++ {
-			orderState := myWorldView.Orders[myWorldView.SenderID][floor][button]
+			var buttonValue int
+			if button == elevio.BT_Cab {
+				buttonValue = 2 + myNodeID
+			} else {
+				buttonValue = button
+			}
+			orderState := myWorldView.Orders[myNodeID][floor][buttonValue]
 			buttonType := elevio.ButtonType(button)
 			switch orderState {
 			case OrderConfirmed:

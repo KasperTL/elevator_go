@@ -91,6 +91,7 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
+
 			var buttonValue int
 			if newOrder.Button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
@@ -149,7 +150,7 @@ func WorldViewManager(
 
 				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
 					myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
-					setOrderLights(myWorldView)
+					setOrderLights(myWorldView, myNodeID)
 					worldViewConfirmed <- myWorldView
 
 				} else {
