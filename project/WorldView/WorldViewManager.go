@@ -74,7 +74,7 @@ func WorldViewManager(
 			if stable {
 
 				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
-				setOrderLights(myWorldView)
+				setOrderLights(myWorldView, myNodeID)
 				worldViewConfirmed <- myWorldView
 
 			} else {
