@@ -43,14 +43,44 @@ func WorldViewManager(
 				myWorldView.AliveList[peerID] = true
 			}
 
+			// rejoin logic
+			if peers.New != "" {
+				for i := range myWorldView.stableWorldview {
+					myWorldView.stableWorldview[i] = false
+				}
+			}
+
+			// need to reset my view of the lost elevators. 
+
 			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
-			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
-			setOrderLights(myWorldView)
-			worldViewConfirmed <- myWorldView
+
+			stable := true 
+			for _, b := range myWorldView.stableWorldview {
+				if !b {
+					stable = false
+				}
+			}
+
+
+			if stable {
+
+				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
+				setOrderLights(myWorldView)
+				worldViewConfirmed <- myWorldView
+				
+			} else {
+
+				myWorldView.Orders = syncOnRejon(myWorldView.Orders, myNodeID, peerWorldView.SenderID) 
+				if isWorldViewStable(myWorldView.Orders, myWorldView.AliveList) {
+					myWorldView.stableWorldview[myNodeID] = true
+				}				
+			}
+
+			
 
 		case myElevatorState := <-newLocalElevatorState:
 			myWorldView.ElevatorStates[myNodeID] = myElevatorState
