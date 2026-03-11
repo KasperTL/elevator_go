@@ -1,10 +1,10 @@
 package WorldView
 
 import (
-	"fmt"
 	"project/ElevatorDriver"
 	"project/config"
 	"project/elevio"
+	"project/Network/peers"
 	"strconv"
 )
 
@@ -16,10 +16,16 @@ const (
 	OrderConfirmed = 2
 )
 
+type WorldViewStatus int 
+const (
+	reconnectState = 0
+	nominal 	   = 1
+)
+
 type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
-	StableWorldview		[config.NumElevators]bool 
+	Status		   [config.NumElevators]WorldViewStatus 
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
 	Orders         [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState
 }
@@ -30,31 +36,45 @@ func InitWorldView(nodeID int) WorldView {
 	return view
 }
 
-func PrintHallOrders(wv WorldView) {
-	fmt.Println("\n=== Hall Orders ===")
-	for floor := 0; floor < config.NumFloors; floor++ {
-		fmt.Printf("Floor %d: ", floor)
-		for elevator := 0; elevator < config.NumElevators; elevator++ {
-			upState := orderStateToString(wv.Orders[elevator][floor][elevio.BT_HallUp])
-			downState := orderStateToString(wv.Orders[elevator][floor][elevio.BT_HallDown])
-			fmt.Printf("E%d[↑%s ↓%s] ", elevator, upState, downState)
+func (wv *WorldView) setAliveElevators(peers peers.PeerUpdate) {
+	wv.AliveList = [config.NumElevators]bool{}
+	wv.AliveList[wv.SenderID] = true
+	for _, peerIDstr := range peers.Peers {
+		peerID, err := strconv.Atoi(peerIDstr)
+		if err != nil {
+			continue
 		}
-		fmt.Println()
+		wv.AliveList[peerID] = true
 	}
-	fmt.Println()
 }
 
-func orderStateToString(state OrderState) string {
-	switch state {
-	case OrderIdle:
-		return "Idle"
-	case OrderPending:
-		return "Pend"
-	case OrderConfirmed:
-		return "Conf"
-	default:
-		return "?"
+func (wv *WorldView) setStatusToReconnect() {
+	for i := range wv.Status {
+		wv.Status[i] = reconnectState
 	}
+}
+
+func amIOnline(peers peers.PeerUpdate) bool {
+	var online bool
+	if len(peers.Peers) > 0 {
+		online = true
+	} else {
+		online = false
+	}
+	return online 
+}
+
+func (wv *WorldView) areAllPeerWorlViewsNominal() bool {
+	var stable bool
+	stable = true
+	for i := range config.NumElevators {
+		if wv.AliveList[i] {
+			if wv.Status[i] == reconnectState {
+				stable = false
+			}
+		}
+	}
+	return stable 
 }
 
 func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
@@ -106,7 +126,7 @@ func syncOnRejon(
 	return localOrders
 }
 
-func isWorldViewStable(
+func isHallOrdersConsistent(
 	orders [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState,
 	alivePeers [config.NumElevators]bool,
 ) bool {
@@ -180,7 +200,7 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 	myWorldView.ElevatorStates[peerWorldView.SenderID] = peerWorldView.ElevatorStates[peerWorldView.SenderID]
 	myWorldView.AliveList[peerWorldView.SenderID] = peerWorldView.AliveList[peerWorldView.SenderID]
 	myWorldView.Orders[peerWorldView.SenderID] = peerWorldView.Orders[peerWorldView.SenderID]
-	myWorldView.StableWorldview[peerWorldView.SenderID] = peerWorldView.StableWorldview[peerWorldView.SenderID]
+	myWorldView.Status[peerWorldView.SenderID] = peerWorldView.Status[peerWorldView.SenderID]
 	return myWorldView
 }
 

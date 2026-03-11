@@ -1,7 +1,6 @@
 package WorldView
 
 import (
-	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -30,6 +29,7 @@ func WorldViewManager(
 	heartbeat := time.NewTicker(config.HeartbeatTime)
 
 	var online bool
+	var stable bool
 
 	for {
 		select {
@@ -37,53 +37,19 @@ func WorldViewManager(
 			networkTx <- myWorldView
 
 		case peers = <-peersC:
-			myWorldView.AliveList = [config.NumElevators]bool{}
-			myWorldView.AliveList[myNodeID] = true
-
-			if len(peers.Peers) > 0 {
-				online = true
-			} else {
-				online = false
-			}
-
-			for _, peerIDstr := range peers.Peers {
-				peerID, err := strconv.Atoi(peerIDstr)
-				if err != nil {
-					continue
-				}
-				myWorldView.AliveList[peerID] = true
-			}
-
-			// rejoin logic
+	
+			myWorldView.setAliveElevators(peers)
+			online = amIOnline(peers)
 			if peers.New != "" {
-				for i := range myWorldView.StableWorldview {
-					myWorldView.StableWorldview[i] = false
-				}
+				myWorldView.setStatusToReconnect()
 			}
-
-			fmt.Println("PeersC: ", peers)
-			// need to reset my view of the lost elevators.
-
 			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
 
-			if peerWorldView.SenderID == myNodeID {
-				continue
-			}
-
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
+			stable = myWorldView.areAllPeerWorlViewsNominal()
 
-			stable := true
-			for i := range config.NumElevators {
-				if myWorldView.AliveList[i] {
-					if !myWorldView.StableWorldview[i] {
-						stable = false
-					}
-
-				}
-			}
-			fmt.Println("stable: ", stable)
 			if stable {
 
 				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
@@ -93,9 +59,8 @@ func WorldViewManager(
 			} else {
 
 				myWorldView.Orders = syncOnRejon(myWorldView.Orders, myNodeID, peerWorldView.SenderID)
-
-				if isWorldViewStable(myWorldView.Orders, myWorldView.AliveList) {
-					myWorldView.StableWorldview[myNodeID] = true
+				if isHallOrdersConsistent(myWorldView.Orders, myWorldView.AliveList) {
+					myWorldView.Status[myNodeID] = nominal
 				}
 			}
 
