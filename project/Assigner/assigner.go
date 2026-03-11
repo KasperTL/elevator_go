@@ -47,6 +47,8 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		switch elevator.Behaviour {
 		case ElevatorDriver.EB_Idle:
 			movementDirection = "stop"
+		case ElevatorDriver.EB_DoorOpen:
+			movementDirection = "stop"
 		default:
 			movementDirection = ElevatorDriver.DirnToString(elevator.Direction)
 		}
