@@ -89,8 +89,6 @@ func WorldViewManager(
 			case OrderConfirmed:
 				continue
 			}
-			setOrderLights(myWorldView)
-			worldViewConfirmed <- myWorldView
 
 		case completeOrder := <-orderComplete:
 			var buttonValue int
