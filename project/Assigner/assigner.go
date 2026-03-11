@@ -43,13 +43,20 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		if !wv.AliveList[i] {
 			continue
 		}
+		var movementDirection string
+		switch elevator.Behaviour {
+		case ElevatorDriver.EB_Idle:
+			movementDirection = "stop"
+		default:
+			movementDirection = ElevatorDriver.DirnToString(elevator.Direction)
+		}
 		if elevator.GetObstructed() || elevator.GetMotorStop() {
 			continue
 		} else {
 			stateMap[strconv.Itoa(i)] = HRAElevState{
 				Behaviour:   ElevatorDriver.StateToString(elevator.GetBehaviour()),
 				Floor:       elevator.GetFloor(),
-				Direction:   ElevatorDriver.DirnToString(elevator.GetDirection()),
+				Direction:   movementDirection,
 				CabRequests: cabOrders,
 			}
 		}

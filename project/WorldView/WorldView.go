@@ -173,7 +173,7 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 func CabOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
-		cabOrders[floor] = Orders[floor][2+nodeID] == OrderPending
+		cabOrders[floor] = Orders[floor][2+nodeID] == OrderConfirmed
 	}
 	return cabOrders
 }
@@ -181,8 +181,8 @@ func CabOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderStat
 func HallOrdersAsBool(Orders [config.NumFloors][2 + config.NumElevators]OrderState) [config.NumFloors][2]bool {
 	var hallOrders [config.NumFloors][2]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
-		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderPending
-		hallOrders[floor][1] = Orders[floor][elevio.BT_HallDown] == OrderPending
+		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderConfirmed
+		hallOrders[floor][1] = Orders[floor][elevio.BT_HallDown] == OrderConfirmed
 	}
 	return hallOrders
 }

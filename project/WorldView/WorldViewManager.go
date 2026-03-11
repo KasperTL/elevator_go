@@ -1,7 +1,6 @@
 package WorldView
 
 import (
-	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -47,9 +46,6 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
-			if peerWorldView.SenderID == myNodeID {
-				continue
-			}
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
@@ -97,7 +93,6 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case completeOrder := <-orderComplete:
-			fmt.Println("Order complete")
 			var buttonValue int
 			if completeOrder.Button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
@@ -105,8 +100,6 @@ func WorldViewManager(
 				buttonValue = int(completeOrder.Button)
 
 			}
-
-			fmt.Println(myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue])
 
 			switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
 			case OrderConfirmed:
