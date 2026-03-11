@@ -35,7 +35,6 @@ func WorldViewManager(
 		select {
 		case <-heartbeat.C:
 			networkTx <- myWorldView
-			worldViewConfirmed <- myWorldView
 
 		case peers = <-peersC:
 
