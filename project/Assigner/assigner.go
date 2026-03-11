@@ -60,7 +60,9 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 				CabRequests: cabOrders,
 			}
 		}
+		fmt.Println("Peer", i, "Floor", elevator.Floor, "Direction", ElevatorDriver.DirnToString(elevator.Direction))
 	}
+	fmt.Println("\n")
 
 	if len(stateMap) == 0 {
 		return ElevatorDriver.Orders{}
@@ -73,6 +75,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Marshal error: ", err)
 		panic("json.Marshal error")
 	}
+
 	ret, err := exec.Command("Assigner/Excecutables/"+hraExecutable, "-i", "--includeCab", string(jsonBytes)).CombinedOutput()
 	if err != nil {
 		fmt.Println("exec.Command error: ", err)
