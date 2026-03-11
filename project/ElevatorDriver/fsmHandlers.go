@@ -3,6 +3,7 @@ package ElevatorDriver
 import (
 	"project/elevio"
 	"time"
+	"project/config"
 )
 
 func handleNewOrder(
@@ -65,6 +66,7 @@ func handleFloorArrival(
 	elevatorMotorTimer *time.Timer,
 	floor int,
 ) {
+	elevatorMotorTimer.Reset(config.ElevatorMotorTime)
 	elevio.SetFloorIndicator(floor)
 	elevator.Floor = floor
 
