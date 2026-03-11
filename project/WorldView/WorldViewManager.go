@@ -47,8 +47,8 @@ func WorldViewManager(
 
 			// rejoin logic
 			if peers.New != "" {
-				for i := range myWorldView.stableWorldview {
-					myWorldView.stableWorldview[i] = false
+				for i := range myWorldView.StableWorldview {
+					myWorldView.StableWorldview[i] = false
 				}
 			}
 
@@ -62,11 +62,15 @@ func WorldViewManager(
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 
 			stable := true
-			for i, b := range myWorldView.AliveList {
-				if b && myWorldView.stableWorldview[i] {
-					stable = false
+			for i := range config.NumElevators {
+				if myWorldView.AliveList[i] {
+					if !myWorldView.StableWorldview[i] {
+						stable = false
+					}
+
 				}
 			}
+			fmt.Println("stable: ", stable)
 			if stable {
 
 				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
@@ -78,7 +82,7 @@ func WorldViewManager(
 				myWorldView.Orders = syncOnRejon(myWorldView.Orders, myNodeID, peerWorldView.SenderID)
 
 				if isWorldViewStable(myWorldView.Orders, myWorldView.AliveList) {
-					myWorldView.stableWorldview[myNodeID] = true
+					myWorldView.StableWorldview[myNodeID] = true
 				}
 			}
 

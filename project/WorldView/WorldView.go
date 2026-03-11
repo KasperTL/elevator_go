@@ -19,7 +19,7 @@ const (
 type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
-	stableWorldview		[config.NumElevators]bool 
+	StableWorldview		[config.NumElevators]bool 
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
 	Orders         [config.NumElevators][config.NumFloors][2 + config.NumElevators]OrderState
 }
@@ -181,7 +181,7 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 	myWorldView.ElevatorStates[peerWorldView.SenderID] = peerWorldView.ElevatorStates[peerWorldView.SenderID]
 	myWorldView.AliveList[peerWorldView.SenderID] = peerWorldView.AliveList[peerWorldView.SenderID]
 	myWorldView.Orders[peerWorldView.SenderID] = peerWorldView.Orders[peerWorldView.SenderID]
-	myWorldView.stableWorldview[peerWorldView.SenderID] = peerWorldView.stableWorldview[peerWorldView.SenderID]
+	myWorldView.StableWorldview[peerWorldView.SenderID] = peerWorldView.StableWorldview[peerWorldView.SenderID]
 	return myWorldView
 }
 
