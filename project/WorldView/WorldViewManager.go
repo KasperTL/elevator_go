@@ -35,9 +35,10 @@ func WorldViewManager(
 		select {
 		case <-heartbeat.C:
 			networkTx <- myWorldView
+			worldViewConfirmed <- myWorldView
 
 		case peers = <-peersC:
-	
+
 			myWorldView.setAliveElevators(peers)
 			online = amIOnline(peers)
 			if peers.New != "" {
