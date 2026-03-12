@@ -49,7 +49,6 @@ func main() {
 
 	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
 
-	worldViewToAssigner := make(chan WorldView.WorldView, config.Buffer)
 
 	go WorldView.WorldViewManager(
 		networkRx,
@@ -67,7 +66,7 @@ func main() {
 		localElevator)
 
 	go Assigner.Assigner(
-		worldViewToAssigner,
+		worldViewOut,
 		newOrder,
 		id)
 
