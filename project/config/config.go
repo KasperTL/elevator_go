@@ -11,7 +11,7 @@ const (
 	NumElevatorButtons = 3
 	NumOrderTypes      = 2 + NumElevators
 	PeersPortNumber    = 58735
-	BcastPortNumber    = 58750
+	BcastPortNumber    = 58730
 	Buffer             = 1024
 
 	DisconnectTime    = 1 * time.Second

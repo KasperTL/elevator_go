@@ -71,6 +71,7 @@ func handleFloorArrival(
 	elevator.Floor = floor
 
 	if elevator.Behaviour != EB_Moving {
+		// TODO : maybo wrong?
 		enterIdle(elevator, elevatorMotorTimer)
 		return
 	}
