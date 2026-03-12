@@ -35,6 +35,7 @@ func WorldViewManager(
 		select {
 		case <-heartbeat.C:
 			networkTx <- myWorldView
+			worldViewConfirmed <- myWorldView
 
 		case peers = <-peersC:
 	
@@ -43,7 +44,7 @@ func WorldViewManager(
 			if peers.New != "" {
 				myWorldView.setStatusToReconnect()
 			}
-			worldViewConfirmed <- myWorldView
+			// worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
 
@@ -54,7 +55,7 @@ func WorldViewManager(
 
 				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
 				setOrderLights(myWorldView, myNodeID)
-				worldViewConfirmed <- myWorldView
+				// worldViewConfirmed <- myWorldView
 
 			} else {
 
@@ -66,7 +67,7 @@ func WorldViewManager(
 
 		case myElevatorState := <-newLocalElevatorState:
 			myWorldView.ElevatorStates[myNodeID] = myElevatorState
-			worldViewConfirmed <- myWorldView
+			// worldViewConfirmed <- myWorldView
 
 		case newOrder := <-orderRequest:
 
@@ -108,7 +109,7 @@ func WorldViewManager(
 			case false:
 				myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderConfirmed
 				setOrderLights(myWorldView, myNodeID)
-				worldViewConfirmed <- myWorldView
+				// worldViewConfirmed <- myWorldView
 
 			}
 
@@ -141,7 +142,7 @@ func WorldViewManager(
 					if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
 						myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
 						setOrderLights(myWorldView, myNodeID)
-						worldViewConfirmed <- myWorldView
+						// worldViewConfirmed <- myWorldView
 
 					} else {
 						continue
@@ -155,7 +156,7 @@ func WorldViewManager(
 			case false:
 				myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
 				setOrderLights(myWorldView, myNodeID)
-				worldViewConfirmed <- myWorldView
+				// worldViewConfirmed <- myWorldView
 			}
 		}
 	}

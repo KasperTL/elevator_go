@@ -41,8 +41,8 @@ func Elevator_fsm(
 			updatedElevatorState <- elevator
 
 		case orders = <-newOrder:
-			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, updatedElevatorState)
-			
+			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
+			updatedElevatorState <- elevator
 
 		case <-elevatorMotorTimer.C:
 			fmt.Println("Gets motorstop")
