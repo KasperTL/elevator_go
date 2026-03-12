@@ -90,7 +90,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
-	//PrintHRAOutput(*output)
+	PrintHRAOutput(*output)
 
 	return (*output)[strconv.Itoa(nodeID)]
 }

@@ -35,17 +35,15 @@ func Elevator_fsm(
 			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, floor)
 			elevator.MotorStop = false
 			updatedElevatorState <- elevator
-			fmt.Println("New floor")
 
 		case <-doorClosingc:
 			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
 			updatedElevatorState <- elevator
-			fmt.Println("Door closing")
 
 		case orders = <-newOrder:
 			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
 			//updatedElevatorState <- elevator
-			fmt.Println("New order")
+			
 
 		case <-elevatorMotorTimer.C:
 			fmt.Println("Gets motorstop")
