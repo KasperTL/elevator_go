@@ -86,7 +86,7 @@ func WorldViewManager(
 
 			if online {
 
-				myWorldView.tryMarkCofirmedOrderCompleted(orderFloor, orderType)
+				myWorldView.tryMarkConfirmedOrderCompleted(orderFloor, orderType)
 				setOrderLights(myWorldView, myNodeID)
 			} else {
 				myWorldView.Orders[myNodeID][orderFloor][orderType] = OrderIdle
