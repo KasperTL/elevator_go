@@ -12,6 +12,7 @@ func handleNewOrder(
 	openDoorC chan<- bool,
 	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
+	updatedElevatorState chan<- Elevator,
 ) {
 
 	switch elevator.Behaviour {
@@ -21,21 +22,25 @@ func handleNewOrder(
 		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
 			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			updatedElevatorState <- *elevator
 			return
 		}
 		if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
 			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			updatedElevatorState <- *elevator
 			return
 		}
 		if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 			startMoving(elevator, elevatorMotorTimer)
+			updatedElevatorState <- *elevator
 			return
 		}
 		if orderInOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
 			startMoving(elevator, elevatorMotorTimer)
+			updatedElevatorState <- *elevator
 			return
 		}
 
@@ -46,6 +51,7 @@ func handleNewOrder(
 		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
 			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			updatedElevatorState <- *elevator
 			return
 		}
 
