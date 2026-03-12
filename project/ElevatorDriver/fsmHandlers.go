@@ -16,16 +16,21 @@ func handleNewOrder(
 
 	switch elevator.Behaviour {
 
+	//TODO: Changed the if-statments with orderAtFloorInDirection
+	//Earlier it was a check for both hall and cab order, this is combined to orderAtFloorInDirection
+
 	case EB_Idle:
 
-		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 		if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
@@ -43,14 +48,16 @@ func handleNewOrder(
 
 	case EB_DoorOpen:
 
-		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 
 	case EB_Moving:
-		//Handled at floor arrival
+		//TODO: Added at cleanup, verify that this is correct
+		break
 
 	default:
 		panic("New order not handled")
@@ -70,21 +77,24 @@ func handleFloorArrival(
 	elevio.SetFloorIndicator(floor)
 	elevator.Floor = floor
 
-	if elevator.Behaviour != EB_Moving {
-		// TODO : maybo wrong?
-		enterIdle(elevator, elevatorMotorTimer)
-		return
-	}
+	//TODO: This must be wrong. Shouldnt be possible to arrive at a floor while not moving?
+	//elevator.Behaviour != EB_Moving {
+	// TODO : maybo wrong?
+	//	enterIdle(elevator, elevatorMotorTimer)
+	//	return
+	//}
 
-	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-		// TODO
-		// This is toooooooo long, need to fix
-		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
-			reverseDirection(elevator)
+	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) { //TODO, verifiser at dette fungerer!&& !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			//TODO: Changed the order of the functions, now it clears order before reversing direction, verify that this is correct
+			reverseDirection(elevator)
+
 		}
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
@@ -94,7 +104,8 @@ func handleFloorArrival(
 	}
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		reverseDirection(elevator)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
@@ -128,7 +139,8 @@ func handleDoorClosing(
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}

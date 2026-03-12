@@ -21,6 +21,7 @@ const (
 	EB_Moving   = 2
 )
 
+// TODO: May want to add get and set functions for the elevator stuct
 type Elevator struct {
 	Floor       int
 	Direction   ElevatorDirection
@@ -50,7 +51,7 @@ func DirnToString(ed ElevatorDirection) string {
 	default:
 		return "up"
 	}
-	
+
 }
 
 // change to Behaviour to string

@@ -73,7 +73,7 @@ func cabOrderAtFloor(currentFloor int, orders Orders) bool {
 }
 
 func orderAtFloorInDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
-	return orders[currentFloor][direction.toBT()]
+	return orders[currentFloor][direction.toBT()] || orders[currentFloor][elevio.BT_Cab]
 }
 
 func orderAtFloorOppositeDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
