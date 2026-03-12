@@ -6,14 +6,14 @@ import (
 	"project/elevio"
 )
 
-type Orders [config.NumFloors][config.NumButtons]bool
+type Orders [config.NumFloors][config.NumElevatorButtons]bool
 
 func orderInDirection(thisFloor int, direction ElevatorDirection, orders Orders) bool {
 
 	switch direction {
 	case ED_Up:
 		for floor := thisFloor + 1; floor < config.NumFloors; floor++ {
-			for button := 0; button < config.NumButtons; button++ {
+			for button := 0; button < config.NumElevatorButtons; button++ {
 				if orders[floor][button] {
 					return true
 				}
@@ -22,7 +22,7 @@ func orderInDirection(thisFloor int, direction ElevatorDirection, orders Orders)
 		return false
 	case ED_Down:
 		for floor := 0; floor < thisFloor; floor++ {
-			for button := 0; button < config.NumButtons; button++ {
+			for button := 0; button < config.NumElevatorButtons; button++ {
 				if orders[floor][button] {
 					return true
 				}
@@ -38,7 +38,7 @@ func orderInOppositeDirection(thisFloor int, direction ElevatorDirection, orders
 	switch direction {
 	case ED_Down:
 		for floor := thisFloor + 1; floor < config.NumFloors; floor++ {
-			for button := 0; button < config.NumButtons; button++ {
+			for button := 0; button < config.NumElevatorButtons; button++ {
 				if orders[floor][button] {
 					return true
 				}
@@ -47,7 +47,7 @@ func orderInOppositeDirection(thisFloor int, direction ElevatorDirection, orders
 		return false
 	case ED_Up:
 		for floor := 0; floor < thisFloor; floor++ {
-			for button := 0; button < config.NumButtons; button++ {
+			for button := 0; button < config.NumElevatorButtons; button++ {
 				if orders[floor][button] {
 					return true
 				}
@@ -84,7 +84,7 @@ func PrintOrders(orders Orders) {
 	fmt.Printf("  +--------------------+\n")
 	for f := config.NumFloors - 1; f >= 0; f-- {
 		fmt.Printf("  |")
-		for b := 0; b < config.NumButtons; b++ {
+		for b := 0; b < config.NumElevatorButtons; b++ {
 			if orders[f][b] {
 				fmt.Printf("  #   ")
 			} else {

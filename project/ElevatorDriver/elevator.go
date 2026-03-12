@@ -77,7 +77,7 @@ func ElevatorPrint(e Elevator) {
 
 	for f := config.NumFloors - 1; f >= 0; f-- {
 		fmt.Printf("  |")
-		for b := 0; b < config.NumButtons; b++ {
+		for b := 0; b < config.NumElevatorButtons; b++ {
 
 		}
 		fmt.Printf("| %d\n", f)

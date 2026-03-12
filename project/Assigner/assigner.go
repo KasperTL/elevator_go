@@ -118,11 +118,11 @@ func PrintHRAInput(input HRAInput) {
 }
 
 func PrintHRAOutput(output map[string]ElevatorDriver.Orders) {
-    prettyJSON, err := json.MarshalIndent(output, "", "  ")
-    if err != nil {
-        fmt.Println("Error formatting JSON:", err)
-        return
-    }
-    fmt.Println("=== HRA Output ===")
-    fmt.Println(string(prettyJSON))
+	prettyJSON, err := json.MarshalIndent(output, "", "  ")
+	if err != nil {
+		fmt.Println("Error formatting JSON:", err)
+		return
+	}
+	fmt.Println("=== HRA Output ===")
+	fmt.Println(string(prettyJSON))
 }

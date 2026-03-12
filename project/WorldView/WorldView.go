@@ -28,7 +28,7 @@ type WorldView struct {
 	AliveList      [config.NumElevators]bool
 	Status         [config.NumElevators]WorldViewStatus
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
-	Orders         [config.NumElevators][config.NumFloors][config.NumButtons]OrderState
+	Orders         [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState
 }
 
 func InitWorldView(nodeID int) WorldView {
@@ -112,13 +112,13 @@ func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
 }
 
 func syncOnRejon(
-	localOrders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+	localOrders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
 	myNodeID int,
 	peerID int,
-) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
+) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumButtons; button++ {
+		for button := 0; button < config.NumOrderTypes; button++ {
 			if isPeerAhead(localOrders[peerID][floor][button], localOrders[myNodeID][floor][button]) {
 				localOrders[myNodeID][floor][button] = localOrders[peerID][floor][button]
 			}
@@ -128,12 +128,12 @@ func syncOnRejon(
 }
 
 func isHallOrdersConsistent(
-	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
 	alivePeers [config.NumElevators]bool,
 ) bool {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumButtons; button++ {
+		for button := 0; button < config.NumOrderTypes; button++ {
 
 			var peersOrderView []OrderState
 			for peerID, alive := range alivePeers {
@@ -155,13 +155,13 @@ func isHallOrdersConsistent(
 }
 
 func updateOrders(
-	orders [config.NumElevators][config.NumFloors][config.NumButtons]OrderState,
+	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
 	NodeID int,
 	alivePeers []string,
-) [config.NumElevators][config.NumFloors][config.NumButtons]OrderState {
+) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < 2+config.NumElevators; button++ {
+		for button := 0; button < config.NumOrderTypes; button++ {
 			currentOrderState := orders[NodeID][floor][button]
 			newOrderState := currentOrderState
 
@@ -205,7 +205,7 @@ func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldVie
 	return myWorldView
 }
 
-func CabOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState, nodeID int) [config.NumFloors]bool {
+func CabOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
 		cabOrders[floor] = Orders[floor][2+nodeID] == OrderConfirmed
@@ -213,7 +213,7 @@ func CabOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState, nod
 	return cabOrders
 }
 
-func HallOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState) [config.NumFloors][2]bool {
+func HallOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState) [config.NumFloors][2]bool {
 	var hallOrders [config.NumFloors][2]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
 		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderConfirmed
@@ -224,7 +224,7 @@ func HallOrdersAsBool(Orders [config.NumFloors][config.NumButtons]OrderState) [c
 
 func setOrderLights(myWorldView WorldView, myNodeID int) {
 	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < 3; button++ {
+		for button := 0; button < config.NumElevatorButtons; button++ {
 			var buttonValue int
 			if button == elevio.BT_Cab {
 				buttonValue = 2 + myNodeID
