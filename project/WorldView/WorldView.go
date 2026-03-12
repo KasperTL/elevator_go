@@ -99,9 +99,26 @@ func updateOrders(
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
 			peersOrderView := alivePeersOrderView(orders, alivePeers, floor, button)
-			orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
-			if allPeersAtComplete(peersOrderView) {
-				orders[NodeID][floor][button] = OrderIdle
+
+			currentOrderState := orders[NodeID][floor][button]
+
+			switch currentOrderState {
+			case OrderIdle:
+				if getHighestOrderState(peersOrderView) != OrderComplete {
+					orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+				}
+			case OrderPending:
+				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
+					orders[NodeID][floor][button] = OrderConfirmed
+				}
+			case OrderConfirmed:
+				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+
+			case OrderComplete:
+				if allPeersUpToDateOrAhead(peersOrderView, OrderComplete, OrderIdle) {
+					orders[NodeID][floor][button] = OrderIdle
+				}
 			}
 		}
 	}
@@ -111,15 +128,6 @@ func updateOrders(
 func allPeersUpToDateOrAhead(peers []OrderState, myState OrderState, aheadState OrderState) bool {
 	for _, p := range peers {
 		if p != myState && p != aheadState {
-			return false
-		}
-	}
-	return true
-}
-
-func allPeersAtComplete(peers []OrderState) bool {
-	for _, p := range peers {
-		if p != OrderComplete {
 			return false
 		}
 	}
