@@ -90,10 +90,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
-	// fmt.Printf("output: \n")
-	// for k, v := range *output {
-	//     fmt.Printf("%6v :  %+v\n", k, v)
-	// }
+	PrintHRAOutput(*output)
 
 	return (*output)[strconv.Itoa(nodeID)]
 }
@@ -118,4 +115,14 @@ func PrintHRAInput(input HRAInput) {
 	}
 	fmt.Println("=== HRA Input ===")
 	fmt.Println(string(prettyJSON))
+}
+
+func PrintHRAOutput(output map[string]ElevatorDriver.Orders) {
+    prettyJSON, err := json.MarshalIndent(output, "", "  ")
+    if err != nil {
+        fmt.Println("Error formatting JSON:", err)
+        return
+    }
+    fmt.Println("=== HRA Output ===")
+    fmt.Println(string(prettyJSON))
 }

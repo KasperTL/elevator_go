@@ -71,50 +71,9 @@ func main() {
 		newOrder,
 		id)
 
-	go func() {
-		for w := range worldViewOut {
-			fmt.Println("---- WorldView Update ----")
-			fmt.Print("\033[H\033[2J")
-			//PrintWorldView(w) // if you made the print function earlier
-			worldViewToAssigner <- w
-		}
-	}()
+	
 	select {}
 
 }
 
-// func PrintWorldView(w WorldView.WorldView) {
-// 	fmt.Println("------ WORLD VIEW ------")
-// 	fmt.Printf("SenderID: %d\n", w.SenderID)
 
-// 	fmt.Println("\nAlive List:")
-// 	for i, alive := range w.AliveList {
-// 		fmt.Printf("Elevator %d: %t\n", i, alive)
-// 	}
-
-// 	fmt.Println("\nStatus:")
-// 	for i, s := range w.Status {
-// 		fmt.Printf("Elevator %d: %d\n", i, s)
-// 	}
-
-// 	fmt.Println("\nElevator States:")
-// 	for i, e := range w.ElevatorStates {
-// 		fmt.Printf("Elevator %d -> Floor:%d Direction:%d Behaviour:%d Obstruction:%t MotorStop:%t\n",
-// 			i, e.Floor, e.Direction, e.Behaviour, e.Obstruction, e.MotorStop)
-// 	}
-
-// 	fmt.Println("\nOrders:")
-// 	for elev := 0; elev < config.NumElevators; elev++ {
-// 		fmt.Printf("Elevator %d:\n", elev)
-// 		for floor := 0; floor < config.NumFloors; floor++ {
-// 			for btn := 0; btn < config.NumButtons; btn++ {
-// 				order := w.Orders[elev][floor][btn]
-// 				if order != WorldView.OrderIdle {
-// 					fmt.Printf("  Floor %d Button %d -> %d\n", floor, btn, order)
-// 				}
-// 			}
-// 		}
-// 	}
-
-// 	fmt.Println("------------------------")
-// }
