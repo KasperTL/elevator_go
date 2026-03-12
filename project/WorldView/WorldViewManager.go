@@ -28,7 +28,6 @@ func WorldViewManager(
 	heartbeat := time.NewTicker(config.HeartbeatTime)
 
 	var online bool
-	var stable bool
 
 	for {
 		select {
@@ -37,30 +36,16 @@ func WorldViewManager(
 			worldViewConfirmed <- myWorldView
 
 		case peers = <-peersC:
-	
+
 			myWorldView.setAliveElevators(peers)
 			online = amIOnline(peers)
-			if peers.New != "" {
-				myWorldView.setStatusToReconnect()
-			}
 
 		case peerWorldView := <-networkRx:
 
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
-			stable = myWorldView.areAllPeerWorlViewsNominal()
 
-			if stable {
-
-				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, myWorldView.AliveList)
-				setOrderLights(myWorldView, myNodeID)
-
-			} else {
-
-				myWorldView.Orders = syncOnRejon(myWorldView.Orders, myNodeID, peerWorldView.SenderID)
-				if isHallOrdersConsistent(myWorldView.Orders, myWorldView.AliveList) {
-					myWorldView.Status[myNodeID] = nominal
-				}
-			}
+			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, myWorldView.AliveList)
+			setOrderLights(myWorldView, myNodeID)
 
 		case myElevatorState := <-newLocalElevatorState:
 			myWorldView.ElevatorStates[myNodeID] = myElevatorState
@@ -80,7 +65,7 @@ func WorldViewManager(
 			}
 
 		case completeOrder := <-orderComplete:
-			
+
 			orderType := orderTypeFromButton(completeOrder, myNodeID)
 			orderFloor := completeOrder.Floor
 
