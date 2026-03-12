@@ -135,12 +135,8 @@ func isHallOrdersConsistent(
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
 
-			var peersOrderView []OrderState
-			for peerID, alive := range alivePeers {
-				if alive {
-					peersOrderView = append(peersOrderView, orders[peerID][floor][button])
-				}
-			}
+			peersOrderView := alivePeersOrderView(orders,alivePeers, floor, button)
+
 			if len(peersOrderView) == 0 {
 				continue
 			}
@@ -157,7 +153,7 @@ func isHallOrdersConsistent(
 func updateOrders(
 	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
 	NodeID int,
-	alivePeers []string,
+	alivePeers [config.NumElevators]bool,
 ) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
@@ -165,17 +161,7 @@ func updateOrders(
 			currentOrderState := orders[NodeID][floor][button]
 			newOrderState := currentOrderState
 
-			var peersOrderView []OrderState
-
-			for _, alivePeerStr := range alivePeers {
-				alivePeerID, err := strconv.Atoi(alivePeerStr)
-				if err != nil {
-					continue
-				}
-				if alivePeerID != NodeID {
-					peersOrderView = append(peersOrderView, orders[alivePeerID][floor][button])
-				}
-			}
+			peersOrderView := alivePeersOrderView(orders, alivePeers, floor, button)
 
 			switch currentOrderState {
 			case OrderIdle:
@@ -243,4 +229,59 @@ func setOrderLights(myWorldView WorldView, myNodeID int) {
 			}
 		}
 	}
+}
+
+func orderTypeFromButton(order elevio.ButtonEvent, nodeID int) int {
+	var orderType int
+	if order.Button == elevio.BT_Cab {
+		orderType = 2 + nodeID
+	} else {
+		orderType = int(order.Button)
+	}
+
+	return orderType 
+}
+
+
+
+
+func alivePeersOrderView(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, alivePeers [config.NumElevators]bool, floor int, button int) []OrderState {
+	var alivePeersOrderView []OrderState
+		for peerID, alive := range alivePeers {
+			if alive {
+				alivePeersOrderView = append(alivePeersOrderView, orders[peerID][floor][button])
+			}
+		}
+		return alivePeersOrderView
+}
+
+func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int) {
+	switch wv.Orders[wv.SenderID][orderFloor][orderType] {
+		case OrderIdle:
+			var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
+			if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
+				wv.Orders[wv.SenderID][orderFloor][orderType] = OrderPending
+				return 
+			} 
+		case OrderPending:
+			return
+		case OrderConfirmed:
+			return 
+		}
+}
+
+func (wv *WorldView) tryMarkCofirmedOrderCompleted(orderFloor int, orderType int) {
+	switch wv.Orders[wv.SenderID][orderFloor][orderType] {
+		case OrderConfirmed:
+			var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
+
+			if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
+				wv.Orders[wv.SenderID][orderFloor][orderType] = OrderIdle
+				return 
+			} 
+		case OrderPending:
+			return 
+		case OrderIdle:
+			return 
+		}
 }

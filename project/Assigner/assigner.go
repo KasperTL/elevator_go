@@ -70,7 +70,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 	}
 
 	input := HRAInput{hallOrders, stateMap}
-	PrintHRAInput(input)
+	//PrintHRAInput(input)
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		fmt.Println("json.Marshal error: ", err)
@@ -90,7 +90,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
-	PrintHRAOutput(*output)
+	//PrintHRAOutput(*output)
 
 	return (*output)[strconv.Itoa(nodeID)]
 }

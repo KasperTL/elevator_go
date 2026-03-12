@@ -5,7 +5,6 @@ import (
 	"project/Network/peers"
 	"project/config"
 	"project/elevio"
-	"strconv"
 	"time"
 )
 
@@ -21,8 +20,8 @@ func WorldViewManager(
 
 	myWorldView := InitWorldView(myNodeID)
 
-	orderRequest := make(chan elevio.ButtonEvent, config.Buffer)
-	go elevio.PollButtons(orderRequest)
+	buttonEventCh := make(chan elevio.ButtonEvent, config.Buffer)
+	go elevio.PollButtons(buttonEventCh)
 
 	var peers peers.PeerUpdate
 
@@ -44,7 +43,6 @@ func WorldViewManager(
 			if peers.New != "" {
 				myWorldView.setStatusToReconnect()
 			}
-			// worldViewConfirmed <- myWorldView
 
 		case peerWorldView := <-networkRx:
 
@@ -53,9 +51,8 @@ func WorldViewManager(
 
 			if stable {
 
-				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, peers.Peers)
+				myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, myWorldView.AliveList)
 				setOrderLights(myWorldView, myNodeID)
-				// worldViewConfirmed <- myWorldView
 
 			} else {
 
@@ -67,96 +64,33 @@ func WorldViewManager(
 
 		case myElevatorState := <-newLocalElevatorState:
 			myWorldView.ElevatorStates[myNodeID] = myElevatorState
-			// worldViewConfirmed <- myWorldView
 
-		case newOrder := <-orderRequest:
+		case buttonEvent := <-buttonEventCh:
 
-			var buttonValue int
-			if newOrder.Button == elevio.BT_Cab {
-				buttonValue = 2 + myNodeID
+			orderType := orderTypeFromButton(buttonEvent, myNodeID)
+			orderFloor := buttonEvent.Floor
+
+			if online {
+				myWorldView.tryPromoteIdleOrderToPending(orderFloor, orderType)
+
 			} else {
-				buttonValue = int(newOrder.Button)
-			}
-
-			switch online {
-			case true:
-				switch myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] {
-				case OrderIdle:
-
-					var peersOrderView []OrderState
-					for _, peerIDstr := range peers.Peers {
-						peerID, err := strconv.Atoi(peerIDstr)
-						if err != nil {
-							continue
-						}
-						if peerID != myNodeID {
-							peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][newOrder.Floor][buttonValue])
-						}
-					}
-
-					if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
-						myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderPending
-					} else {
-						continue
-					}
-
-				case OrderPending:
-					continue
-				case OrderConfirmed:
-					continue
-				}
-
-			case false:
-				myWorldView.Orders[myNodeID][newOrder.Floor][buttonValue] = OrderConfirmed
+				myWorldView.Orders[myNodeID][orderFloor][orderType] = OrderConfirmed
 				setOrderLights(myWorldView, myNodeID)
-				// worldViewConfirmed <- myWorldView
 
 			}
 
 		case completeOrder := <-orderComplete:
-			var buttonValue int
-			if completeOrder.Button == elevio.BT_Cab {
-				buttonValue = 2 + myNodeID
-			} else {
-				buttonValue = int(completeOrder.Button)
+			
+			orderType := orderTypeFromButton(completeOrder, myNodeID)
+			orderFloor := completeOrder.Floor
 
-			}
+			if online {
 
-			switch online {
-			case true:
-
-				switch myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] {
-				case OrderConfirmed:
-
-					var peersOrderView []OrderState
-					for _, peerIDstr := range peers.Peers {
-						peerID, err := strconv.Atoi(peerIDstr)
-						if err != nil {
-							continue
-						}
-						if peerID != myNodeID {
-							peersOrderView = append(peersOrderView, myWorldView.Orders[peerID][completeOrder.Floor][buttonValue])
-						}
-					}
-
-					if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
-						myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
-						setOrderLights(myWorldView, myNodeID)
-						// worldViewConfirmed <- myWorldView
-
-					} else {
-						continue
-					}
-
-				case OrderPending:
-					continue
-				case OrderIdle:
-					continue
-				}
-			case false:
-				myWorldView.Orders[myNodeID][completeOrder.Floor][buttonValue] = OrderIdle
+				myWorldView.tryMarkCofirmedOrderCompleted(orderFloor, orderType)
 				setOrderLights(myWorldView, myNodeID)
-				// worldViewConfirmed <- myWorldView
+			} else {
+				myWorldView.Orders[myNodeID][orderFloor][orderType] = OrderIdle
+				setOrderLights(myWorldView, myNodeID)
 			}
 		}
 	}
