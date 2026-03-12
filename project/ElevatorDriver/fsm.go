@@ -42,7 +42,7 @@ func Elevator_fsm(
 
 		case orders = <-newOrder:
 			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
-			//updatedElevatorState <- elevator
+			updatedElevatorState <- elevator
 			
 
 		case <-elevatorMotorTimer.C:
