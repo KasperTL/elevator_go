@@ -1,9 +1,9 @@
 package ElevatorDriver
 
 import (
+	"project/config"
 	"project/elevio"
 	"time"
-	"project/config"
 )
 
 func handleNewOrder(
@@ -71,7 +71,7 @@ func handleFloorArrival(
 	elevator.Floor = floor
 
 	if elevator.Behaviour != EB_Moving {
-		//panic("Floor arrival in non-moving state")
+		enterIdle(elevator, elevatorMotorTimer)
 		return
 	}
 
