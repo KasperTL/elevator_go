@@ -110,6 +110,8 @@ func InitializeElevator() Elevator {
 }
 
 // Getters
+// TODO: Are we sure we want these? After some reasearch, it seems this it not GO-stile.
+// GetFloor is also the name used in elevio
 func (e Elevator) GetFloor() int                   { return e.Floor }
 func (e Elevator) GetDirection() ElevatorDirection { return e.Direction }
 func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.Behaviour }

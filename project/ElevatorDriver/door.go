@@ -51,7 +51,6 @@ func door_fsm(
 				doorOpenTimer.Reset(config.DoorOpenDuration)
 				myDoorState = DS_Obstructed
 				elevio.SetDoorOpenLamp(true)
-
 			}
 
 		case <-doorOpenTimer.C:

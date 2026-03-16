@@ -8,7 +8,7 @@ import (
 
 func startMoving(elevator *Elevator, timer *time.Timer) {
 	elevator.Behaviour = EB_Moving
-	elevio.SetMotorDirection(elevator.Direction.toMD()) //Migh want to use a channel for this instead
+	elevio.SetMotorDirection(elevator.Direction.toMD()) //TODO:Migh want to use a channel for this instead
 	timer.Reset(config.ElevatorMotorTime)
 }
 

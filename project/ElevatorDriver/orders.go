@@ -63,7 +63,7 @@ func clearOrderAtFloor(floor int, direction ElevatorDirection, orders Orders, cl
 	if orders[floor][elevio.BT_Cab] {
 		clearOrderAtFloorC <- elevio.ButtonEvent{Floor: floor, Button: elevio.BT_Cab}
 	}
-	if orders[floor][direction.toBT()] { // ← Fikset: direction.toBT() i stedet for direction
+	if orders[floor][direction.toBT()] { //TODO: ← Fikset: direction.toBT() i stedet for direction
 		clearOrderAtFloorC <- elevio.ButtonEvent{Floor: floor, Button: direction.toBT()}
 	}
 }
@@ -77,7 +77,7 @@ func orderAtFloorInDirection(currentFloor int, direction ElevatorDirection, orde
 }
 
 func orderAtFloorOppositeDirection(currentFloor int, direction ElevatorDirection, orders Orders) bool {
-	return orders[currentFloor][oppositeDirection(direction).toBT()]
+	return orders[currentFloor][oppositeDirection(direction).toBT()] || orders[currentFloor][elevio.BT_Cab] //TODO: Added cab orders.
 }
 
 func PrintOrders(orders Orders) {

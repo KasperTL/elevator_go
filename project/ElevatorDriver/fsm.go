@@ -11,7 +11,7 @@ func Elevator_fsm(
 	newOrder <-chan Orders,
 	updatedElevatorState chan<- Elevator,
 	deliveredOrder chan<- elevio.ButtonEvent,
-	elevator Elevator,
+	elevator Elevator, //TODO: Should this be a pointer?
 ) {
 
 	newFloorC := make(chan int, config.Buffer)
@@ -22,11 +22,10 @@ func Elevator_fsm(
 	elevatorMotorTimer := time.NewTimer(config.ElevatorMotorTime)
 	elevatorMotorTimer.Stop()
 
-	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
-
-	go elevio.PollFloorSensor(newFloorC)
-
 	var orders Orders
+
+	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
+	go elevio.PollFloorSensor(newFloorC)
 
 	ElevatorPrint(elevator)
 	for {
