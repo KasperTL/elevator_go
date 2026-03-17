@@ -14,19 +14,12 @@ const (
 	OrderIdle      = 0
 	OrderPending   = 1
 	OrderConfirmed = 2
-)
-
-type WorldViewStatus int
-
-const (
-	reconnectState = 0
-	nominal        = 1
+	OrderComplete  = 3
 )
 
 type WorldView struct {
 	SenderID       int
 	AliveList      [config.NumElevators]bool
-	Status         [config.NumElevators]WorldViewStatus
 	ElevatorStates [config.NumElevators]ElevatorDriver.Elevator
 	Orders         [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState
 }
@@ -49,15 +42,9 @@ func (wv *WorldView) setAliveElevators(peers peers.PeerUpdate) {
 	}
 }
 
-func (wv *WorldView) setStatusToReconnect() {
-	for i := range wv.Status {
-		wv.Status[i] = reconnectState
-	}
-}
-
 func amIOnline(peers peers.PeerUpdate) bool {
 	var online bool
-	if len(peers.Peers) > 0 {
+	if len(peers.Peers) > 1 {
 		online = true
 	} else {
 		online = false
@@ -65,28 +52,17 @@ func amIOnline(peers peers.PeerUpdate) bool {
 	return online
 }
 
-func (wv *WorldView) areAllPeerWorlViewsNominal() bool {
-	var stable bool
-	stable = true
-	for i := range config.NumElevators {
-		if wv.AliveList[i] {
-			if wv.Status[i] == reconnectState {
-				stable = false
-			}
-		}
-	}
-	return stable
-}
-
-func allPeersUpToDateOrAhead(peers []OrderState, stateA OrderState, stateB OrderState) bool {
+func getHighestOrderState(peers []OrderState) OrderState {
+	var highestOrderState OrderState
 	for _, p := range peers {
-		if p != stateA && p != stateB {
-			return false
+		if p > highestOrderState {
+			highestOrderState = p
 		}
 	}
-	return true
+	return highestOrderState
 }
 
+// misleading name
 func anyPeerAhead(peers []OrderState, state OrderState) bool {
 	for _, p := range peers {
 		if p == state {
@@ -106,109 +82,69 @@ func isPeerAhead(peerOrderState OrderState, myOrderState OrderState) bool {
 
 	case OrderPending:
 		return peerOrderState == OrderConfirmed
+
+	case OrderComplete:
+		return peerOrderState == OrderIdle || peerOrderState == OrderPending || peerOrderState == OrderConfirmed
 	default:
 		return false
 	}
 }
 
-func syncOnRejon(
-	localOrders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
-	myNodeID int,
-	peerID int,
-) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
-
-	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumOrderTypes; button++ {
-			if isPeerAhead(localOrders[peerID][floor][button], localOrders[myNodeID][floor][button]) {
-				localOrders[myNodeID][floor][button] = localOrders[peerID][floor][button]
-			}
-		}
-	}
-	return localOrders
-}
-
-func isHallOrdersConsistent(
-	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
-	alivePeers [config.NumElevators]bool,
-) bool {
-
-	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumOrderTypes; button++ {
-
-			var peersOrderView []OrderState
-			for peerID, alive := range alivePeers {
-				if alive {
-					peersOrderView = append(peersOrderView, orders[peerID][floor][button])
-				}
-			}
-			if len(peersOrderView) == 0 {
-				continue
-			}
-			for _, state := range peersOrderView[1:] {
-				if state != peersOrderView[0] {
-					return false
-				}
-			}
-		}
-	}
-	return true
-}
-
 func updateOrders(
 	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
 	NodeID int,
-	alivePeers []string,
+	alivePeers [config.NumElevators]bool,
 ) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
+			peersOrderView := alivePeersOrderView(orders, alivePeers, floor, button)
+
 			currentOrderState := orders[NodeID][floor][button]
-			newOrderState := currentOrderState
-
-			var peersOrderView []OrderState
-
-			for _, alivePeerStr := range alivePeers {
-				alivePeerID, err := strconv.Atoi(alivePeerStr)
-				if err != nil {
-					continue
-				}
-				if alivePeerID != NodeID {
-					peersOrderView = append(peersOrderView, orders[alivePeerID][floor][button])
-				}
-			}
 
 			switch currentOrderState {
 			case OrderIdle:
-				if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) && anyPeerAhead(peersOrderView, OrderPending) {
-					newOrderState = OrderPending
+				if getHighestOrderState(peersOrderView) != OrderComplete {
+					orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
 				}
 			case OrderPending:
+				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
 				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
-					newOrderState = OrderConfirmed
+					orders[NodeID][floor][button] = OrderConfirmed
 				}
 			case OrderConfirmed:
-				if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) && anyPeerAhead(peersOrderView, OrderIdle) {
-					newOrderState = OrderIdle
+				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+
+			case OrderComplete:
+				if allPeersUpToDateOrAhead(peersOrderView, OrderComplete, OrderIdle) {
+					orders[NodeID][floor][button] = OrderIdle
 				}
 			}
-			orders[NodeID][floor][button] = newOrderState
 		}
 	}
 	return orders
+}
+
+func allPeersUpToDateOrAhead(peers []OrderState, myState OrderState, aheadState OrderState) bool {
+	for _, p := range peers {
+		if p != myState && p != aheadState {
+			return false
+		}
+	}
+	return true
 }
 
 func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldView) WorldView {
 	myWorldView.ElevatorStates[peerWorldView.SenderID] = peerWorldView.ElevatorStates[peerWorldView.SenderID]
 	myWorldView.AliveList[peerWorldView.SenderID] = peerWorldView.AliveList[peerWorldView.SenderID]
 	myWorldView.Orders[peerWorldView.SenderID] = peerWorldView.Orders[peerWorldView.SenderID]
-	myWorldView.Status[peerWorldView.SenderID] = peerWorldView.Status[peerWorldView.SenderID]
 	return myWorldView
 }
 
 func CabOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
-		cabOrders[floor] = Orders[floor][2+nodeID] == OrderConfirmed
+		cabOrders[floor] = (Orders[floor][2+nodeID] == OrderConfirmed) || (Orders[floor][2+nodeID] == OrderComplete)
 	}
 	return cabOrders
 }
@@ -216,8 +152,8 @@ func CabOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState, 
 func HallOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState) [config.NumFloors][2]bool {
 	var hallOrders [config.NumFloors][2]bool
 	for floor := 0; floor < config.NumFloors; floor++ {
-		hallOrders[floor][0] = Orders[floor][elevio.BT_HallUp] == OrderConfirmed
-		hallOrders[floor][1] = Orders[floor][elevio.BT_HallDown] == OrderConfirmed
+		hallOrders[floor][0] = (Orders[floor][elevio.BT_HallUp] == OrderConfirmed) || (Orders[floor][elevio.BT_HallUp] == OrderComplete)
+		hallOrders[floor][1] = (Orders[floor][elevio.BT_HallDown] == OrderConfirmed) || (Orders[floor][elevio.BT_HallDown] == OrderComplete)
 	}
 	return hallOrders
 }
@@ -240,7 +176,65 @@ func setOrderLights(myWorldView WorldView, myNodeID int) {
 				elevio.SetButtonLamp(buttonType, floor, false)
 			case OrderPending:
 				continue
+			case OrderComplete:
+				continue
 			}
 		}
+	}
+}
+
+func orderTypeFromButton(order elevio.ButtonEvent, nodeID int) int {
+	var orderType int
+	if order.Button == elevio.BT_Cab {
+		orderType = 2 + nodeID
+	} else {
+		orderType = int(order.Button)
+	}
+
+	return orderType
+}
+
+func alivePeersOrderView(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, alivePeers [config.NumElevators]bool, floor int, button int) []OrderState {
+	var alivePeersOrderView []OrderState
+	for peerID, alive := range alivePeers {
+		if alive {
+			alivePeersOrderView = append(alivePeersOrderView, orders[peerID][floor][button])
+		}
+	}
+	return alivePeersOrderView
+}
+
+func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int) {
+	switch wv.Orders[wv.SenderID][orderFloor][orderType] {
+	case OrderIdle:
+		var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
+		if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
+			wv.Orders[wv.SenderID][orderFloor][orderType] = OrderPending
+			return
+		}
+	case OrderPending:
+		return
+	case OrderConfirmed:
+		return
+	case OrderComplete:
+		return
+	}
+}
+
+func (wv *WorldView) tryMarkConfirmedOrderCompleted(orderFloor int, orderType int) {
+	switch wv.Orders[wv.SenderID][orderFloor][orderType] {
+	case OrderConfirmed:
+		var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
+
+		if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
+			wv.Orders[wv.SenderID][orderFloor][orderType] = OrderComplete
+			return
+		}
+	case OrderPending:
+		return
+	case OrderIdle:
+		return
+	case OrderComplete:
+		return
 	}
 }
