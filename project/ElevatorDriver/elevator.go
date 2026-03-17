@@ -84,6 +84,7 @@ func ElevatorPrint(e Elevator) {
 }
 
 func InitializeElevator() Elevator {
+	elevio.SetDoorOpenLamp(false)
 	var elevatorFloor int
 	if elevio.GetFloor() != -1 {
 		elevatorFloor = elevio.GetFloor()

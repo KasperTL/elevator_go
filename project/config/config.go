@@ -10,7 +10,7 @@ const (
 
 	NumElevatorButtons = 3
 	NumOrderTypes      = 2 + NumElevators
-	PeersPortNumber    = 58735
+	PeersPortNumber    = 58736
 	BcastPortNumber    = 58730
 	Buffer             = 1024
 

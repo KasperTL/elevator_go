@@ -52,6 +52,9 @@ func handleNewOrder(
 			return
 		}
 
+	case EB_Moving:
+		return
+
 	default:
 		fmt.Println("New order not handled")
 	}
@@ -120,10 +123,6 @@ func handleDoorClosing(
 	elevatorMotorTimer *time.Timer,
 ) {
 
-	if elevator.Behaviour != EB_DoorOpen {
-		fmt.Println("Door closed while not open")
-	}
-
 	if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 		startMoving(elevator, elevatorMotorTimer)
 		return
@@ -143,5 +142,4 @@ func handleDoorClosing(
 		return
 	}
 
-	enterIdle(elevator, elevatorMotorTimer)
 }
