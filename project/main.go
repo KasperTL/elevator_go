@@ -27,47 +27,45 @@ func main() {
 	id = *ElevatorId
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
+	localElevator := ElevatorDriver.InitializeElevator()
+
 	fmt.Println("Elevator initialized with id", id, "on port", Port)
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
-	localElevator := ElevatorDriver.InitializeElevator()
+	
 
 	peersRx := make(chan peers.PeerUpdate, config.Buffer)
 	peersTx := make(chan bool, config.Buffer)
-
 	go peers.Transmitter(config.PeersPortNumber, strconv.Itoa(id), peersTx)
 	go peers.Receiver(config.PeersPortNumber, peersRx)
 
 	networkTx := make(chan WorldView.WorldView, config.Buffer)
 	networkRx := make(chan WorldView.WorldView, config.Buffer)
-
 	go bcast.Transmitter(config.BcastPortNumber, networkTx)
 	go bcast.Receiver(config.BcastPortNumber, networkRx)
 
-	newLocalElevatorState := make(chan ElevatorDriver.Elevator, config.Buffer)
-	orderComplete := make(chan elevio.ButtonEvent, config.Buffer)
-	newOrder := make(chan ElevatorDriver.Orders, config.Buffer)
-
-	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
-
+	localElevatorStateC := make(chan ElevatorDriver.Elevator, config.Buffer)
+	servedOrderC := make(chan elevio.ButtonEvent, config.Buffer)
+	newOrderC := make(chan ElevatorDriver.Orders, config.Buffer)
+	assignerInputC := make(chan WorldView.WorldView, config.Buffer)
 
 	go WorldView.WorldViewManager(
 		networkRx,
 		networkTx,
-		newLocalElevatorState,
-		orderComplete,
-		worldViewOut,
+		localElevatorStateC,
+		servedOrderC,
+		assignerInputC,
 		peersRx,
 		id)
 
 	go ElevatorDriver.Elevator_fsm(
-		newOrder,
-		newLocalElevatorState,
-		orderComplete,
+		newOrderC,
+		localElevatorStateC,
+		servedOrderC,
 		localElevator)
 
 	go Assigner.Assigner(
-		worldViewOut,
-		newOrder,
+		assignerInputC,
+		newOrderC,
 		id)
 
 	
