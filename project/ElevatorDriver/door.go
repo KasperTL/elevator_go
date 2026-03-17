@@ -29,13 +29,12 @@ func door_fsm(
 
 	for {
 		select {
+		//TODO: Could remove if statments and just send doorObstructedC <- doorIsObstructed
 		case doorIsObstructed = <-obstructionC:
 			if doorIsObstructed {
 				myDoorState = DS_Obstructed
 				doorObstructedC <- true
-			} else if !doorIsObstructed && myDoorState == DS_Obstructed {
-				doorOpenTimer.Reset(config.DoorOpenDuration)
-				myDoorState = DS_Open
+			} else {
 				doorObstructedC <- false
 			}
 
@@ -47,11 +46,11 @@ func door_fsm(
 				elevio.SetDoorOpenLamp(true)
 			case DS_Open:
 				doorOpenTimer.Reset(config.DoorOpenDuration)
+				elevio.SetDoorOpenLamp(true)
 			case DS_Obstructed:
 				doorOpenTimer.Reset(config.DoorOpenDuration)
 				myDoorState = DS_Obstructed
 				elevio.SetDoorOpenLamp(true)
-
 			}
 
 		case <-doorOpenTimer.C:
@@ -62,7 +61,13 @@ func door_fsm(
 				elevio.SetDoorOpenLamp(false)
 
 			case DS_Obstructed:
-				doorOpenTimer.Reset(config.DoorOpenDuration)
+				if !doorIsObstructed {
+					myDoorState = DS_Closed
+					doorClosingC <- true
+					elevio.SetDoorOpenLamp(false)
+				} else {
+					doorOpenTimer.Reset(config.DoorOpenDuration)
+				}
 			}
 		}
 	}

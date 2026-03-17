@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
@@ -13,19 +14,19 @@ func handleNewOrder(
 	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
-
 	switch elevator.Behaviour {
-
 	case EB_Idle:
 
-		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 		if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 			reverseDirection(elevator)
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
@@ -43,17 +44,18 @@ func handleNewOrder(
 
 	case EB_DoorOpen:
 
-		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 			return
 		}
 
 	case EB_Moving:
-		//Handled at floor arrival
+		return
 
 	default:
-		panic("New order not handled")
+		fmt.Println("New order not handled")
 	}
 
 }
@@ -70,21 +72,23 @@ func handleFloorArrival(
 	elevio.SetFloorIndicator(floor)
 	elevator.Floor = floor
 
-	if elevator.Behaviour != EB_Moving {
-		// TODO : maybo wrong?
-		enterIdle(elevator, elevatorMotorTimer)
+	if elevator.Obstruction {
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		return
 	}
 
-	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) || cabOrderAtFloor(elevator.Floor, orders) {
-		// TODO
-		// This is toooooooo long, need to fix
+	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
 		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
-			stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+			stopElevator(elevatorMotorTimer)
+			openDoor(elevator, openDoorC)
 			reverseDirection(elevator)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			//TODO: Should we return here?
+			return
 		}
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
@@ -94,7 +98,8 @@ func handleFloorArrival(
 	}
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		reverseDirection(elevator)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
@@ -117,10 +122,6 @@ func handleDoorClosing(
 	elevatorMotorTimer *time.Timer,
 ) {
 
-	if elevator.Behaviour != EB_DoorOpen {
-		panic("Door closed while not open")
-	}
-
 	if orderInDirection(elevator.Floor, elevator.Direction, orders) {
 		startMoving(elevator, elevatorMotorTimer)
 		return
@@ -128,7 +129,8 @@ func handleDoorClosing(
 
 	if orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) {
 		reverseDirection(elevator)
-		stopAndOpenDoor(elevator, openDoorC, elevatorMotorTimer)
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
 		clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
 		return
 	}
@@ -140,4 +142,5 @@ func handleDoorClosing(
 	}
 
 	enterIdle(elevator, elevatorMotorTimer)
+
 }
