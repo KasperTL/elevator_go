@@ -8,10 +8,10 @@ import (
 )
 
 func Elevator_fsm(
-	newOrder <-chan Orders,
-	updatedElevatorState chan<- Elevator,
-	deliveredOrder chan<- elevio.ButtonEvent,
-	elevator Elevator, //TODO: Should this be a pointer?
+	newOrderC <-chan Orders,
+	updatedElevatorStateC chan<- Elevator,
+	deliveredOrderC chan<- elevio.ButtonEvent,
+	elevator Elevator,
 ) {
 
 	newFloorC := make(chan int, config.Buffer)
@@ -31,30 +31,27 @@ func Elevator_fsm(
 	for {
 		select {
 		case floor := <-newFloorC:
-			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, floor)
+			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer, floor)
 			elevator.MotorStop = false
-			updatedElevatorState <- elevator
+			updatedElevatorStateC <- elevator
 
 		case <-doorClosingc:
-			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
-			updatedElevatorState <- elevator
-
-		case orders = <-newOrder:
-			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
-			updatedElevatorState <- elevator
+			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer)
+			updatedElevatorStateC <- elevator
+		case orders = <-newOrderC:
+			handleNewOrder(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer)
+			updatedElevatorStateC <- elevator
 
 		case <-elevatorMotorTimer.C:
 			fmt.Println("Gets motorstop")
 			elevator.MotorStop = true
-			updatedElevatorState <- elevator
+			updatedElevatorStateC <- elevator
 
 		case obstrucion := <-doorObstructedc:
 			if obstrucion != elevator.Obstruction {
 				elevator.Obstruction = obstrucion
-				updatedElevatorState <- elevator
+				updatedElevatorStateC <- elevator
 			}
-
 		}
-
 	}
 }

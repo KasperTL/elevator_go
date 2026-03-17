@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
@@ -15,10 +16,6 @@ func handleNewOrder(
 ) {
 
 	switch elevator.Behaviour {
-
-	//TODO: Changed the if-statments with orderAtFloorInDirection
-	//Earlier it was a check for both hall and cab order, this is combined to orderAtFloorInDirection
-
 	case EB_Idle:
 
 		if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
@@ -55,12 +52,8 @@ func handleNewOrder(
 			return
 		}
 
-	case EB_Moving:
-		//TODO: Added at cleanup, verify that this is correct
-		break
-
 	default:
-		panic("New order not handled")
+		fmt.Println("New order not handled")
 	}
 
 }
@@ -77,21 +70,14 @@ func handleFloorArrival(
 	elevio.SetFloorIndicator(floor)
 	elevator.Floor = floor
 
-	//TODO: This must be wrong. Shouldnt be possible to arrive at a floor while not moving?
-	//elevator.Behaviour != EB_Moving {
-	// TODO : maybo wrong?
-	//	enterIdle(elevator, elevatorMotorTimer)
-	//	return
-	//}
-
 	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
-		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) { //TODO, verifiser at dette fungerer!&& !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
+		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
 			stopElevator(elevatorMotorTimer)
 			openDoor(elevator, openDoorC)
-			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
-			//TODO: Changed the order of the functions, now it clears order before reversing direction, verify that this is correct
 			reverseDirection(elevator)
-
+			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
+			//TODO: Should we return here?
+			return
 		}
 		stopElevator(elevatorMotorTimer)
 		openDoor(elevator, openDoorC)
@@ -129,7 +115,7 @@ func handleDoorClosing(
 ) {
 
 	if elevator.Behaviour != EB_DoorOpen {
-		panic("Door closed while not open")
+		fmt.Println("Door closed while not open")
 	}
 
 	if orderInDirection(elevator.Floor, elevator.Direction, orders) {

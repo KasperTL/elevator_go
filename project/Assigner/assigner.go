@@ -56,7 +56,7 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 			continue
 		} else {
 			stateMap[strconv.Itoa(i)] = HRAElevState{
-				Behaviour:   ElevatorDriver.StateToString(elevator.GetBehaviour()),
+				Behaviour:   ElevatorDriver.BehaviourToString(elevator.GetBehaviour()),
 				Floor:       elevator.GetFloor(),
 				Direction:   movementDirection,
 				CabRequests: cabOrders,
