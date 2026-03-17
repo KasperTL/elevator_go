@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
@@ -33,9 +34,9 @@ func door_fsm(
 			if doorIsObstructed {
 				myDoorState = DS_Obstructed
 				doorObstructedC <- true
-			} else if !doorIsObstructed && myDoorState == DS_Obstructed {
-				doorOpenTimer.Reset(config.DoorOpenDuration)
-				myDoorState = DS_Open
+			} else {
+				//doorOpenTimer.Reset(config.DoorOpenDuration)
+				//myDoorState = DS_Open
 				doorObstructedC <- false
 			}
 
@@ -55,6 +56,7 @@ func door_fsm(
 			}
 
 		case <-doorOpenTimer.C:
+			fmt.Println("Door timer expired", myDoorState)
 			switch myDoorState {
 			case DS_Open:
 				myDoorState = DS_Closed
@@ -62,8 +64,15 @@ func door_fsm(
 				elevio.SetDoorOpenLamp(false)
 
 			case DS_Obstructed:
-				doorOpenTimer.Reset(config.DoorOpenDuration)
+				if !doorIsObstructed {
+					myDoorState = DS_Closed
+					doorClosingC <- true
+					elevio.SetDoorOpenLamp(false)
+				} else {
+					doorOpenTimer.Reset(config.DoorOpenDuration)
+				}
 			}
+			fmt.Println("Door timer expired:", myDoorState)
 		}
 	}
 }

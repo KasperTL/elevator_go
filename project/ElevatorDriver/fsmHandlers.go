@@ -14,7 +14,6 @@ func handleNewOrder(
 	deliveredOrder chan<- elevio.ButtonEvent,
 	elevatorMotorTimer *time.Timer,
 ) {
-
 	switch elevator.Behaviour {
 	case EB_Idle:
 
@@ -141,5 +140,7 @@ func handleDoorClosing(
 		startMoving(elevator, elevatorMotorTimer)
 		return
 	}
+
+	enterIdle(elevator, elevatorMotorTimer)
 
 }
