@@ -48,10 +48,13 @@ func Elevator_fsm(
 			updatedElevatorStateC <- elevator
 
 		case obstrucion := <-doorObstructedc:
-			if obstrucion != elevator.Obstruction {
-				elevator.Obstruction = obstrucion
-				updatedElevatorStateC <- elevator
+
+			if elevator.Behaviour == EB_Idle {
+				openDoorC <- true
 			}
+			elevator.Obstruction = obstrucion
+			updatedElevatorStateC <- elevator
+
 		}
 	}
 }

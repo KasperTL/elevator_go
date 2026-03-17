@@ -70,6 +70,12 @@ func handleFloorArrival(
 	elevio.SetFloorIndicator(floor)
 	elevator.Floor = floor
 
+	if elevator.Obstruction {
+		stopElevator(elevatorMotorTimer)
+		openDoor(elevator, openDoorC)
+		return
+	}
+
 	if orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
 		if !orderInDirection(elevator.Floor, elevator.Direction, orders) && orderAtFloorOppositeDirection(elevator.Floor, elevator.Direction, orders) && !orderAtFloorInDirection(elevator.Floor, elevator.Direction, orders) {
 			stopElevator(elevatorMotorTimer)
