@@ -1,7 +1,6 @@
 package ElevatorDriver
 
 import (
-	"fmt"
 	"project/config"
 	"project/elevio"
 	"time"
@@ -30,13 +29,12 @@ func door_fsm(
 
 	for {
 		select {
+		//TODO: Could remove if statments and just send doorObstructedC <- doorIsObstructed
 		case doorIsObstructed = <-obstructionC:
 			if doorIsObstructed {
 				myDoorState = DS_Obstructed
 				doorObstructedC <- true
 			} else {
-				//doorOpenTimer.Reset(config.DoorOpenDuration)
-				//myDoorState = DS_Open
 				doorObstructedC <- false
 			}
 
@@ -56,7 +54,6 @@ func door_fsm(
 			}
 
 		case <-doorOpenTimer.C:
-			fmt.Println("Door timer expired", myDoorState)
 			switch myDoorState {
 			case DS_Open:
 				myDoorState = DS_Closed
@@ -72,7 +69,6 @@ func door_fsm(
 					doorOpenTimer.Reset(config.DoorOpenDuration)
 				}
 			}
-			fmt.Println("Door timer expired:", myDoorState)
 		}
 	}
 }
