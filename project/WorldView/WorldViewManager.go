@@ -1,6 +1,7 @@
 package WorldView
 
 import (
+	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
@@ -35,22 +36,25 @@ func WorldViewManager(
 			assignerInputC <- myWorldView
 
 		case peers := <-peersC:
+			fmt.Println("Received peer update:", peers)
 			myWorldView.setAliveElevators(peers)
 			online = amIOnline(peers)
 			myWorldView.stashLostNodesCabOrders(peers)
+			fmt.Println("My world view orders:", myWorldView.Orders[1][0][3])
 
 		case peerWorldView := <-networkRx:
-			if initial {
+			if initial && peerWorldView.NodeID != myNodeID {
 				for floor := range config.NumFloors {
 					myWorldView.Orders[myNodeID][floor][myNodeID+2] = peerWorldView.CabOrderRecovery[myNodeID][floor]
 				}
 				initial = false
 			}
+			
 			myWorldView = updatePeerStatusInMyWorldView(myWorldView, peerWorldView)
 			myWorldView.Orders = updateOrders(myWorldView.Orders, myNodeID, myWorldView.AliveList)
 			setOrderLights(myWorldView, myNodeID)
 
-		case myNewElevatorState := <- localElevatorStateC:
+		case myNewElevatorState := <-localElevatorStateC:
 			myWorldView.ElevatorStates[myNodeID] = myNewElevatorState
 
 		case buttonEvent := <-buttonEventCh:

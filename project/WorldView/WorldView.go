@@ -54,7 +54,7 @@ func (wv *WorldView) stashLostNodesCabOrders(peers peers.PeerUpdate) {
 				continue
 			}
 			wv.CabOrderRecovery[lostID][floor] = wv.Orders[lostID][floor][lostID+2]
-			wv.Orders[lostID][floor][lostID+2] = OrderIdle
+			wv.Orders[wv.NodeID][floor][lostID+2] = OrderIdle
 		}
 	}
 }
