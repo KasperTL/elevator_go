@@ -5,13 +5,11 @@ import (
 	"project/ElevatorDriver"
 )
 
-
 type ConsensusMode int 
 const (
 	Standalone = 0
 	Networked  = 1
 )
-
 
 type OrderState int
 const (
