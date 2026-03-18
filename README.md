@@ -26,7 +26,7 @@ This module handles controls the pyhsical elevators by taking orders as input an
 
 ## [Network](https://github.com/KasperTL/elevator_go/tree/main/project/Network)
 
-This module handles the communication between the elevators via worldview. This was taken from [project resources](https://github.com/TTK4145/Network-go) provided
+This module handles the communication between the elevators via worldview. This was taken from [project resources](https://github.com/TTK4145/Network-go) provided.
 
 ## [WorldView](https://github.com/KasperTL/elevator_go/tree/main/project/WorldView)
 
@@ -62,6 +62,10 @@ The main event loop for worldview.
 
 ### lights.go
 Sets button light states based on current order states.
+
+## Cab Orders
+
+Cab orders are handled differently form hall orders. Sicne a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '[2+ nodeID]'
 
 # How to run
 
