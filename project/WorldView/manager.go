@@ -53,6 +53,9 @@ func WorldViewManager(
 			mode = deriveConsensusMode(peers)
 
 		case peerWorldView := <-networkRx:
+			if mode == Standalone {
+				continue
+			}
 			if !cabOrdersRecovered {
 				for floor := range config.NumFloors {
 					myWorldView.Orders[myNodeID][floor][myNodeID+2] = peerWorldView.CabOrderRecovery[myNodeID][floor]
