@@ -59,7 +59,7 @@ func main() {
 		peersRx,
 		id)
 
-	go ElevatorDriver.Elevator_fsm(
+	go ElevatorDriver.ElevatorController(
 		newOrder,
 		newLocalElevatorState,
 		orderComplete,
