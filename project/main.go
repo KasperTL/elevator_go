@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"project/Assigner"
 	"project/ElevatorDriver"
 	"project/Network/bcast"
 	"project/Network/peers"
+	"project/OrderDispatcher"
 	"project/WorldView"
 	"project/config"
 	"project/elevio"
@@ -61,20 +61,17 @@ func main() {
 		recuestOrderC,
 		id)
 
-	go ElevatorDriver.Elevator_fsm(
+	go ElevatorDriver.ElevatorController(
 		newOrderC,
 		localElevatorStateC,
 		servedOrderC,
 		localElevator)
 
-	go Assigner.Assigner(
+	go OrderDispatcher.AssignLocalOrdersFromWorldView(
 		assignerInputC,
 		newOrderC,
 		id)
 
-	
 	select {}
 
 }
-
-

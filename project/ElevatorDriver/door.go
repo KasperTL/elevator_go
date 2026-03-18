@@ -14,7 +14,7 @@ const (
 	DS_Obstructed = 2
 )
 
-func door_fsm(
+func elevatorDoorController(
 	openDoorC <-chan bool,
 	doorObstructedC chan<- bool,
 	doorClosingC chan<- bool,
@@ -29,14 +29,9 @@ func door_fsm(
 
 	for {
 		select {
-		//TODO: Could remove if statments and just send doorObstructedC <- doorIsObstructed
 		case doorIsObstructed = <-obstructionC:
-			if doorIsObstructed {
-				myDoorState = DS_Obstructed
-				doorObstructedC <- true
-			} else {
-				doorObstructedC <- false
-			}
+			myDoorState = DS_Obstructed
+			doorObstructedC <- doorIsObstructed
 
 		case <-openDoorC:
 			switch myDoorState {

@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func Elevator_fsm(
+func ElevatorController(
 	newOrderC <-chan Orders,
 	updatedElevatorStateC chan<- Elevator,
 	deliveredOrderC chan<- elevio.ButtonEvent,
@@ -24,10 +24,9 @@ func Elevator_fsm(
 
 	var orders Orders
 
-	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
+	go elevatorDoorController(openDoorC, doorObstructedc, doorClosingc)
 	go elevio.PollFloorSensor(newFloorC)
 
-	ElevatorPrint(elevator)
 	for {
 		select {
 		case floor := <-newFloorC:
@@ -47,18 +46,8 @@ func Elevator_fsm(
 			elevator.MotorStop = true
 			updatedElevatorStateC <- elevator
 
-		case obstrucion := <-doorObstructedc:
-			switch elevator.Behaviour {
-			case EB_Idle:
-				if obstrucion {
-					openDoorC <- true
-				}
-			case EB_Moving:
-
-			case EB_DoorOpen:
-				openDoorC <- true
-			}
-			elevator.Obstruction = obstrucion
+		case obstruction := <-doorObstructedc:
+			handleObstruction(&elevator, obstruction, openDoorC)
 			updatedElevatorStateC <- elevator
 
 		}
