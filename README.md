@@ -20,15 +20,15 @@ The main assignment logic. On every update from WorldView it:
   - All confirmed hall orders
   - The current state of every alive elevator (floor, direction, behaviour, cab orders)
 
-## ElevatorDriver
+## [ElevatorDriver](https://github.com/KasperTL/elevator_go/tree/main/project/ElevatorDriver)
 
 This module handles controls the pyhsical elevators by taking orders as input and drives the elevators to serve them. It also send back state updates for complete orders to the rest of the system
 
-## Network
+## [Network](https://github.com/KasperTL/elevator_go/tree/main/project/Network)
 
-This module handles the communication between the elevators via worldview.
+This module handles the communication between the elevators via worldview. This was taken from [project resources](https://github.com/TTK4145/Network-go) provided
 
-## WorldView
+## [WorldView](https://github.com/KasperTL/elevator_go/tree/main/project/WorldView)
 
 This module is responsible for maintaining a consistent shared representation of the system state across the elevators.
 
