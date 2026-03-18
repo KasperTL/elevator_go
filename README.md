@@ -84,6 +84,7 @@ This starts the TCP server on port 15657.
 ```
 git clone <repository-url>
 cd elevator_go/project
+```
 
 ### 3. Run the elevator program
 ```
