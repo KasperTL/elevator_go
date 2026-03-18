@@ -57,7 +57,6 @@ func handleNewOrder(
 	default:
 		fmt.Println("New order not handled")
 	}
-
 }
 
 func handleFloorArrival(
@@ -84,7 +83,6 @@ func handleFloorArrival(
 			openDoor(elevator, openDoorC)
 			reverseDirection(elevator)
 			clearOrderAtFloor(elevator.Floor, elevator.Direction, orders, deliveredOrder)
-			//TODO: Should we return here?
 			return
 		}
 		stopElevator(elevatorMotorTimer)
@@ -142,7 +140,6 @@ func handleDoorClosing(
 	}
 
 	enterIdle(elevator, elevatorMotorTimer)
-
 }
 
 func handleObstruction(
