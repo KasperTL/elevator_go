@@ -1,4 +1,4 @@
-package Assigner
+package OrderDispatcher
 
 import (
 	"encoding/json"
@@ -70,7 +70,6 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 	}
 
 	input := HRAInput{hallOrders, stateMap}
-	//PrintHRAInput(input)
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		fmt.Println("json.Marshal error: ", err)
@@ -90,12 +89,11 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 		fmt.Println("json.Unmarshal error: ", err)
 		panic("json.Unmarshal error")
 	}
-	//PrintHRAOutput(*output)
 
 	return (*output)[strconv.Itoa(nodeID)]
 }
 
-func Assigner(
+func AssignLocalOrdersFromWorldView(
 	incomingC <-chan WorldView.WorldView,
 	assignedOrdersC chan<- ElevatorDriver.Orders,
 	myNodeId int,
@@ -105,24 +103,4 @@ func Assigner(
 
 		assignedOrdersC <- assignedOrders
 	}
-}
-
-func PrintHRAInput(input HRAInput) {
-	prettyJSON, err := json.MarshalIndent(input, "", "  ")
-	if err != nil {
-		fmt.Println("Error formatting JSON:", err)
-		return
-	}
-	fmt.Println("=== HRA Input ===")
-	fmt.Println(string(prettyJSON))
-}
-
-func PrintHRAOutput(output map[string]ElevatorDriver.Orders) {
-	prettyJSON, err := json.MarshalIndent(output, "", "  ")
-	if err != nil {
-		fmt.Println("Error formatting JSON:", err)
-		return
-	}
-	fmt.Println("=== HRA Output ===")
-	fmt.Println(string(prettyJSON))
 }

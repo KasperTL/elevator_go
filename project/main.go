@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"project/Assigner"
 	"project/ElevatorDriver"
 	"project/Network/bcast"
 	"project/Network/peers"
+	"project/OrderDispatcher"
 	"project/WorldView"
 	"project/config"
 	"project/elevio"
@@ -49,7 +49,6 @@ func main() {
 
 	worldViewOut := make(chan WorldView.WorldView, config.Buffer)
 
-
 	go WorldView.WorldViewManager(
 		networkRx,
 		networkTx,
@@ -65,14 +64,11 @@ func main() {
 		orderComplete,
 		localElevator)
 
-	go Assigner.Assigner(
+	go OrderDispatcher.AssignLocalOrdersFromWorldView(
 		worldViewOut,
 		newOrder,
 		id)
 
-	
 	select {}
 
 }
-
-
