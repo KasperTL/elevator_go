@@ -68,7 +68,7 @@ func updatedOrders(wv WorldView) [config.NumElevators][config.NumFloors][config.
 					updateOrders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 				}
 			case OrderPending:
-				wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
+				updateOrders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 				if peersReadyToAdvance(peersOrderView, OrderPending, OrderConfirmed) {
 					updateOrders[wv.NodeID][floor][button] = OrderConfirmed
 				}
