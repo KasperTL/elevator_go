@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func Elevator_fsm(
+func ElevatorController(
 	newOrderC <-chan Orders,
 	updatedElevatorStateC chan<- Elevator,
 	deliveredOrderC chan<- elevio.ButtonEvent,
@@ -24,7 +24,7 @@ func Elevator_fsm(
 
 	var orders Orders
 
-	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
+	go elevatorDoorController(openDoorC, doorObstructedc, doorClosingc)
 	go elevio.PollFloorSensor(newFloorC)
 
 	for {
