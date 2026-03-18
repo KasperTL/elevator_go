@@ -51,7 +51,7 @@ func WorldViewManager(
 
 		case peerWorldView := <-networkRx:
 			//In standalone mode, we ignore our own networkRX messages, to ensure consistent behaviour with netimpair.
-			if mode == Standalone {
+			if peerWorldView.NodeID == myNodeID {
 				continue
 			}
 
