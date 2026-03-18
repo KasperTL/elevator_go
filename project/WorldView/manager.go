@@ -47,6 +47,8 @@ func WorldViewManager(
 				}
 				myWorldView.CabOrderRecovery[lostID] = getCabOrdersFromNodeID(myWorldView.Orders, lostID)
 				myWorldView.Orders = markLostIDOrdersIdle(myWorldView.Orders, lostID, myNodeID)
+
+				println("Order of lostID:", myWorldView.Orders[myNodeID][0][2+lostID])
 			}
 			mode = deriveConsensusMode(peers)
 
