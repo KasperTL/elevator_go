@@ -44,7 +44,7 @@ func (wv *WorldView) updatePeerStatusInMyWorldView(peerWorldView WorldView) {
 func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int) {
 	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderIdle {
 		var peersOrderView = collectPeerOrderStates(wv.Orders, wv.AliveList, orderFloor, orderType)
-		if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
+		if peersReadyToAdvance(peersOrderView, OrderIdle, OrderPending) {
 			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderPending
 			return
 		}
@@ -54,7 +54,7 @@ func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int)
 func (wv *WorldView) tryMarkConfirmedOrderCompleted(orderFloor int, orderType int) {
 	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderConfirmed {
 		var peersOrderView = collectPeerOrderStates(wv.Orders, wv.AliveList, orderFloor, orderType)
-		if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderComplete) {
+		if peersReadyToAdvance(peersOrderView, OrderConfirmed, OrderComplete) {
 			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderComplete
 			return
 		}
@@ -76,14 +76,14 @@ func (wv *WorldView) updateOrders() {
 				}
 			case OrderPending:
 				wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
-				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
+				if peersReadyToAdvance(peersOrderView, OrderPending, OrderConfirmed) {
 					wv.Orders[wv.NodeID][floor][button] = OrderConfirmed
 				}
 			case OrderConfirmed:
 				wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 
 			case OrderComplete:
-				if allPeersUpToDateOrAhead(peersOrderView, OrderComplete, OrderIdle) {
+				if peersReadyToAdvance(peersOrderView, OrderComplete, OrderIdle) {
 					wv.Orders[wv.NodeID][floor][button] = OrderIdle
 				}
 			}
@@ -91,7 +91,7 @@ func (wv *WorldView) updateOrders() {
 	}
 }
 
-func allPeersUpToDateOrAhead(peers []OrderState, myState OrderState, aheadState OrderState) bool {
+func peersReadyToAdvance(peers []OrderState, myState OrderState, aheadState OrderState) bool {
 	for _, p := range peers {
 		if p != myState && p != aheadState {
 			return false
