@@ -8,9 +8,9 @@ import (
 )
 
 func Elevator_fsm(
-	newOrder <-chan Orders,
-	updatedElevatorState chan<- Elevator,
-	deliveredOrder chan<- elevio.ButtonEvent,
+	newOrderC <-chan Orders,
+	updatedElevatorStateC chan<- Elevator,
+	deliveredOrderC chan<- elevio.ButtonEvent,
 	elevator Elevator,
 ) {
 
@@ -22,40 +22,45 @@ func Elevator_fsm(
 	elevatorMotorTimer := time.NewTimer(config.ElevatorMotorTime)
 	elevatorMotorTimer.Stop()
 
-	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
-
-	go elevio.PollFloorSensor(newFloorC)
-
 	var orders Orders
+
+	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
+	go elevio.PollFloorSensor(newFloorC)
 
 	ElevatorPrint(elevator)
 	for {
 		select {
 		case floor := <-newFloorC:
-			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer, floor)
+			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer, floor)
 			elevator.MotorStop = false
-			updatedElevatorState <- elevator
+			updatedElevatorStateC <- elevator
 
 		case <-doorClosingc:
-			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
-			updatedElevatorState <- elevator
-
-		case orders = <-newOrder:
-			handleNewOrder(&elevator, orders, openDoorC, deliveredOrder, elevatorMotorTimer)
-			updatedElevatorState <- elevator
+			handleDoorClosing(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer)
+			updatedElevatorStateC <- elevator
+		case orders = <-newOrderC:
+			handleNewOrder(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer)
+			updatedElevatorStateC <- elevator
 
 		case <-elevatorMotorTimer.C:
 			fmt.Println("Gets motorstop")
 			elevator.MotorStop = true
-			updatedElevatorState <- elevator
+			updatedElevatorStateC <- elevator
 
 		case obstrucion := <-doorObstructedc:
-			if obstrucion != elevator.Obstruction {
-				elevator.Obstruction = obstrucion
-				updatedElevatorState <- elevator
+			switch elevator.Behaviour {
+			case EB_Idle:
+				if obstrucion {
+					openDoorC <- true
+				}
+			case EB_Moving:
+
+			case EB_DoorOpen:
+				openDoorC <- true
 			}
+			elevator.Obstruction = obstrucion
+			updatedElevatorStateC <- elevator
 
 		}
-
 	}
 }

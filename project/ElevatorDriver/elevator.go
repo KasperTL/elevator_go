@@ -36,11 +36,10 @@ func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
 	case ED_Down:
 		return ED_Up
 	default:
-		panic("Invalid direction")
+		panic("Invaid direction")
 	}
 }
 
-// Look ower erikIsChamp, they have a clean solution in elevatorFsm.go func ToString(). Same for StateToString()
 func DirnToString(ed ElevatorDirection) string {
 	switch ed {
 	case ED_Up:
@@ -48,13 +47,12 @@ func DirnToString(ed ElevatorDirection) string {
 	case ED_Down:
 		return "down"
 	default:
-		return "up"
+		panic("Invalid direction")
 	}
-	
+
 }
 
-// change to Behaviour to string
-func StateToString(b ElevatorBehaviour) string {
+func BehaviourToString(b ElevatorBehaviour) string {
 	switch b {
 	case EB_Idle:
 		return "idle"
@@ -71,7 +69,7 @@ func ElevatorPrint(e Elevator) {
 	fmt.Printf("  +--------------------+\n")
 	fmt.Printf("  |floor = %-2d          |\n", e.GetFloor())
 	fmt.Printf("  |Direction  = %-12s|\n", DirnToString(e.GetDirection()))
-	fmt.Printf("  |Behaviour = %-12s|\n", StateToString(e.GetBehaviour()))
+	fmt.Printf("  |Behaviour = %-12s|\n", BehaviourToString(e.GetBehaviour()))
 	fmt.Printf("  +--------------------+\n")
 	fmt.Printf("  |  Up  | Down |  Cab |\n")
 
@@ -86,6 +84,7 @@ func ElevatorPrint(e Elevator) {
 }
 
 func InitializeElevator() Elevator {
+	elevio.SetDoorOpenLamp(false)
 	var elevatorFloor int
 	if elevio.GetFloor() != -1 {
 		elevatorFloor = elevio.GetFloor()
@@ -108,7 +107,6 @@ func InitializeElevator() Elevator {
 	}
 }
 
-// Getters
 func (e Elevator) GetFloor() int                   { return e.Floor }
 func (e Elevator) GetDirection() ElevatorDirection { return e.Direction }
 func (e Elevator) GetBehaviour() ElevatorBehaviour { return e.Behaviour }
