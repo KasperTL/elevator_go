@@ -20,8 +20,10 @@ func getAliveElevatorsFromPeers(peers peers.PeerUpdate) [config.NumElevators]boo
 }
 
 func markLostIDOrdersIdle(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, lostID int, myNodeID int) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
-	for floor := range config.NumFloors {
-		orders[myNodeID][floor][2+lostID] = OrderIdle
+	for elevator := range config.NumElevators {
+		for floor := range config.NumFloors {
+			orders[elevator][floor][2+lostID] = OrderIdle
+		}
 	}
 	return orders
 }
