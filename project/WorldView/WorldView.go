@@ -19,27 +19,27 @@ func getAliveElevatorsFromPeers(peers peers.PeerUpdate) [config.NumElevators]boo
 	return aliveList
 }
 
-func markLostIDOrdersIdle(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, lostID int) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
+func markLostIDOrdersIdle(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, lostID int, myNodeID int) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 	for floor := range config.NumFloors {
-		orders[lostID][floor][2 + lostID] = OrderIdle
+		orders[myNodeID][floor][2+lostID] = OrderIdle
 	}
 	return orders
 }
 
-func getCabOrdersFromNodeID(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,nodeID int) [config.NumFloors]OrderState {
+func getCabOrdersFromNodeID(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, nodeID int) [config.NumFloors]OrderState {
 	var cabOrders [config.NumFloors]OrderState
 	for floor := range config.NumFloors {
-		cabOrders[floor] = orders[nodeID][floor][2 + nodeID]
+		cabOrders[floor] = orders[nodeID][floor][2+nodeID]
 	}
 	return cabOrders
 }
 
-func tryPromoteIdleOrderToPending(wv WorldView,orderFloor int, orderType int) OrderState {
+func tryPromoteIdleOrderToPending(wv WorldView, orderFloor int, orderType int) OrderState {
 	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderIdle {
 		var peersOrderView = collectPeerOrderStates(wv.Orders, wv.AliveList, orderFloor, orderType)
 		if peersReadyToAdvance(peersOrderView, OrderIdle, OrderPending) {
 			return OrderPending
-		} 
+		}
 	}
 	return wv.Orders[wv.NodeID][orderFloor][orderType]
 }
@@ -54,7 +54,7 @@ func tryMarkConfirmedOrderCompleted(wv WorldView, orderFloor int, orderType int)
 	return wv.Orders[wv.NodeID][orderFloor][orderType]
 }
 
-func updatedOrders(wv WorldView) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState  {
+func updatedOrders(wv WorldView) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
 	updateOrders := wv.Orders
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
@@ -82,7 +82,7 @@ func updatedOrders(wv WorldView) [config.NumElevators][config.NumFloors][config.
 			}
 		}
 	}
-	return updateOrders 
+	return updateOrders
 }
 
 func peersReadyToAdvance(peers []OrderState, myState OrderState, aheadState OrderState) bool {
@@ -132,7 +132,6 @@ func collectPeerOrderStates(orders [config.NumElevators][config.NumFloors][confi
 	}
 	return alivePeersOrderView
 }
-
 
 func CabOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState, nodeID int) [config.NumFloors]bool {
 	var cabOrders [config.NumFloors]bool
