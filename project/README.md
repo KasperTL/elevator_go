@@ -12,7 +12,13 @@ The code is written in Go language to communicate between the network and module
 
 ## Assigner
 
-This module assigns orders using a [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) provided (reassigning all requests). The assigner function 
+This module assigns orders using a [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) provided (reassigning all requests). 
+
+### assigner.go
+The main assignment logic. On every update from WorldView it:
+- Builds an input for the HRA executable containing:
+  - All confirmed hall orders
+  - The current state of every alive elevator (floor, direction, behaviour, cab orders)
 
 ## ElevatorDriver
 
