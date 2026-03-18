@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/bcast"
 	"project/Network/peers"
@@ -20,18 +19,12 @@ func main() {
 
 	port := flag.Int("port", 15657, "<--Default value, override with command line argument -port=xxxxx")
 	ElevatorId := flag.Int("id", 0, "<--Default value, override with command line argument -id=xxxxx")
-
 	flag.Parse()
-
 	Port = *port
 	id = *ElevatorId
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
 	localElevator := ElevatorDriver.InitializeElevator()
-
-	fmt.Println("Elevator initialized with id", id, "on port", Port)
-	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
-	
 
 	peersRx := make(chan peers.PeerUpdate, config.Buffer)
 	peersTx := make(chan bool, config.Buffer)
@@ -43,13 +36,13 @@ func main() {
 	go bcast.Transmitter(config.BcastPortNumber, networkTx)
 	go bcast.Receiver(config.BcastPortNumber, networkRx)
 
+	requestOrderC := make(chan elevio.ButtonEvent, config.Buffer)
+	go elevio.PollButtons(requestOrderC)
+
 	localElevatorStateC := make(chan ElevatorDriver.Elevator, config.Buffer)
 	servedOrderC := make(chan elevio.ButtonEvent, config.Buffer)
 	newOrderC := make(chan ElevatorDriver.Orders, config.Buffer)
 	assignerInputC := make(chan WorldView.WorldView, config.Buffer)
-
-	recuestOrderC := make(chan elevio.ButtonEvent, config.Buffer)
-	go elevio.PollButtons(recuestOrderC)
 
 	go WorldView.WorldViewManager(
 		networkRx,
@@ -58,7 +51,7 @@ func main() {
 		servedOrderC,
 		assignerInputC,
 		peersRx,
-		recuestOrderC,
+		requestOrderC,
 		id)
 
 	go ElevatorDriver.ElevatorController(
@@ -73,5 +66,4 @@ func main() {
 		id)
 
 	select {}
-
 }
