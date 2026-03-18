@@ -10,11 +10,11 @@ The elevator project, according to the [specification](https://github.com/TTK414
 
 The code is written in Go language to communicate between the network and modules. The network is peer-to-peer and uses UDP for node connection. The system consists of modules Assigner, ElevatorDriver, Network, WorldView.
 
-## Assigner
+## OrderDispatcher
 
-This module assigns orders using a [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) provided (reassigning all requests). 
+This module assigns orders using the [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) (reassigning all requests) provided. 
 
-### assigner.go
+### dispatcher.go
 The main assignment logic. On every update from WorldView it:
 - Builds an input for the HRA executable containing:
   - All confirmed hall orders
@@ -47,7 +47,7 @@ Defines the core data structures:
   - `CabOrderRecovery`: stores cab orders of a disconnected elevator 
     so they can be restored when it reconnects
 
-### WorldView.go
+### worldview.go
 Logic for updating and reading the worldview. Handles merging peer 
 states, advancing order states through the consensus protocol, and 
 collecting peer order views.
