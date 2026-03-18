@@ -1,8 +1,6 @@
 package ElevatorDriver
 
 import (
-	"fmt"
-	"project/config"
 	"project/elevio"
 )
 
@@ -29,6 +27,30 @@ type Elevator struct {
 	MotorStop   bool
 }
 
+func InitializeElevator() Elevator {
+	elevio.SetDoorOpenLamp(false)
+	var elevatorFloor int
+	if elevio.GetFloor() != -1 {
+		elevatorFloor = elevio.GetFloor()
+
+	} else {
+		elevio.SetMotorDirection(elevio.MD_Down)
+
+		for {
+			if elevio.GetFloor() != -1 {
+				elevatorFloor = elevio.GetFloor()
+				elevio.SetMotorDirection(elevio.MD_Stop)
+				break
+			}
+		}
+	}
+	return Elevator{
+		Floor:     elevatorFloor,
+		Direction: ED_Down,
+		Behaviour: EB_Idle,
+	}
+}
+
 func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
 	switch dir {
 	case ED_Up:
@@ -36,7 +58,7 @@ func oppositeDirection(dir ElevatorDirection) ElevatorDirection {
 	case ED_Down:
 		return ED_Up
 	default:
-		panic("Invaid direction")
+		panic("Invalid direction")
 	}
 }
 
@@ -62,48 +84,6 @@ func BehaviourToString(b ElevatorBehaviour) string {
 		return "doorOpen"
 	default:
 		return "unknown"
-	}
-}
-
-func ElevatorPrint(e Elevator) {
-	fmt.Printf("  +--------------------+\n")
-	fmt.Printf("  |floor = %-2d          |\n", e.GetFloor())
-	fmt.Printf("  |Direction  = %-12s|\n", DirnToString(e.GetDirection()))
-	fmt.Printf("  |Behaviour = %-12s|\n", BehaviourToString(e.GetBehaviour()))
-	fmt.Printf("  +--------------------+\n")
-	fmt.Printf("  |  Up  | Down |  Cab |\n")
-
-	for f := config.NumFloors - 1; f >= 0; f-- {
-		fmt.Printf("  |")
-		for b := 0; b < config.NumElevatorButtons; b++ {
-
-		}
-		fmt.Printf("| %d\n", f)
-	}
-	fmt.Printf("  +--------------------+\n")
-}
-
-func InitializeElevator() Elevator {
-	elevio.SetDoorOpenLamp(false)
-	var elevatorFloor int
-	if elevio.GetFloor() != -1 {
-		elevatorFloor = elevio.GetFloor()
-
-	} else {
-		elevio.SetMotorDirection(elevio.MD_Down)
-
-		for {
-			if elevio.GetFloor() != -1 {
-				elevatorFloor = elevio.GetFloor()
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				break
-			}
-		}
-	}
-	return Elevator{
-		Floor:     elevatorFloor,
-		Direction: ED_Down,
-		Behaviour: EB_Idle,
 	}
 }
 

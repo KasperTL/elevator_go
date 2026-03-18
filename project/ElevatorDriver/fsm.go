@@ -27,7 +27,6 @@ func Elevator_fsm(
 	go door_fsm(openDoorC, doorObstructedc, doorClosingc)
 	go elevio.PollFloorSensor(newFloorC)
 
-	ElevatorPrint(elevator)
 	for {
 		select {
 		case floor := <-newFloorC:
