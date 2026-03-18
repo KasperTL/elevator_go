@@ -1,35 +1,11 @@
 package WorldView
 
 import (
-	"project/ElevatorDriver"
 	"project/Network/peers"
 	"project/config"
 	"project/elevio"
 	"strconv"
 )
-
-type OrderState int
-
-const (
-	OrderIdle      = 0
-	OrderPending   = 1
-	OrderConfirmed = 2
-	OrderComplete  = 3
-)
-
-type WorldView struct {
-	NodeID           int
-	AliveList        [config.NumElevators]bool
-	ElevatorStates   [config.NumElevators]ElevatorDriver.Elevator
-	Orders           [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState
-	CabOrderRecovery [config.NumElevators][config.NumFloors]OrderState
-}
-
-func InitWorldView(nodeID int) WorldView {
-	view := WorldView{NodeID: nodeID}
-	view.AliveList[nodeID] = true
-	return view
-}
 
 func (wv *WorldView) setAliveElevators(peers peers.PeerUpdate) {
 	wv.AliveList = [config.NumElevators]bool{}
@@ -59,59 +35,60 @@ func (wv *WorldView) stashLostNodesCabOrders(peers peers.PeerUpdate) {
 	}
 }
 
-func amIOnline(peers peers.PeerUpdate) bool {
-	var online bool
-	if len(peers.Peers) > 1 {
-		online = true
-	} else {
-		online = false
-	}
-	return online
+func (wv *WorldView) updatePeerStatusInMyWorldView(peerWorldView WorldView) {
+	wv.ElevatorStates[peerWorldView.NodeID] = peerWorldView.ElevatorStates[peerWorldView.NodeID]
+	wv.AliveList[peerWorldView.NodeID] = peerWorldView.AliveList[peerWorldView.NodeID]
+	wv.Orders[peerWorldView.NodeID] = peerWorldView.Orders[peerWorldView.NodeID]
 }
 
-func getHighestOrderState(peers []OrderState) OrderState {
-	var highestOrderState OrderState
-	for _, p := range peers {
-		if p > highestOrderState {
-			highestOrderState = p
+func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int) {
+	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderIdle {
+		var peersOrderView = collectPeerOrderStates(wv.Orders, wv.AliveList, orderFloor, orderType)
+		if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
+			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderPending
+			return
 		}
 	}
-	return highestOrderState
 }
 
-func updateOrders(
-	orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState,
-	NodeID int,
-	alivePeers [config.NumElevators]bool,
-) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState {
+func (wv *WorldView) tryMarkConfirmedOrderCompleted(orderFloor int, orderType int) {
+	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderConfirmed {
+		var peersOrderView = collectPeerOrderStates(wv.Orders, wv.AliveList, orderFloor, orderType)
+		if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderComplete) {
+			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderComplete
+			return
+		}
+	}
+}
+
+func (wv *WorldView) updateOrders() {
 
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
-			peersOrderView := alivePeersOrderView(orders, alivePeers, floor, button)
+			peersOrderView := collectPeerOrderStates(wv.Orders, wv.AliveList, floor, button)
 
-			currentOrderState := orders[NodeID][floor][button]
+			currentOrderState := wv.Orders[wv.NodeID][floor][button]
 
 			switch currentOrderState {
 			case OrderIdle:
-				if getHighestOrderState(peersOrderView) != OrderComplete {
-					orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+				if mostAdvancedOrderState(peersOrderView) != OrderComplete {
+					wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 				}
 			case OrderPending:
-				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+				wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 				if allPeersUpToDateOrAhead(peersOrderView, OrderPending, OrderConfirmed) {
-					orders[NodeID][floor][button] = OrderConfirmed
+					wv.Orders[wv.NodeID][floor][button] = OrderConfirmed
 				}
 			case OrderConfirmed:
-				orders[NodeID][floor][button] = getHighestOrderState(peersOrderView)
+				wv.Orders[wv.NodeID][floor][button] = mostAdvancedOrderState(peersOrderView)
 
 			case OrderComplete:
 				if allPeersUpToDateOrAhead(peersOrderView, OrderComplete, OrderIdle) {
-					orders[NodeID][floor][button] = OrderIdle
+					wv.Orders[wv.NodeID][floor][button] = OrderIdle
 				}
 			}
 		}
 	}
-	return orders
 }
 
 func allPeersUpToDateOrAhead(peers []OrderState, myState OrderState, aheadState OrderState) bool {
@@ -123,52 +100,21 @@ func allPeersUpToDateOrAhead(peers []OrderState, myState OrderState, aheadState 
 	return true
 }
 
-func updatePeerStatusInMyWorldView(myWorldView WorldView, peerWorldView WorldView) WorldView {
-	myWorldView.ElevatorStates[peerWorldView.NodeID] = peerWorldView.ElevatorStates[peerWorldView.NodeID]
-	myWorldView.AliveList[peerWorldView.NodeID] = peerWorldView.AliveList[peerWorldView.NodeID]
-	myWorldView.Orders[peerWorldView.NodeID] = peerWorldView.Orders[peerWorldView.NodeID]
-	return myWorldView
-}
-
-func CabOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState, nodeID int) [config.NumFloors]bool {
-	var cabOrders [config.NumFloors]bool
-	for floor := 0; floor < config.NumFloors; floor++ {
-		cabOrders[floor] = (Orders[floor][2+nodeID] == OrderConfirmed) || (Orders[floor][2+nodeID] == OrderComplete)
-	}
-	return cabOrders
-}
-
-func HallOrdersAsBool(Orders [config.NumFloors][config.NumOrderTypes]OrderState) [config.NumFloors][2]bool {
-	var hallOrders [config.NumFloors][2]bool
-	for floor := 0; floor < config.NumFloors; floor++ {
-		hallOrders[floor][0] = (Orders[floor][elevio.BT_HallUp] == OrderConfirmed) || (Orders[floor][elevio.BT_HallUp] == OrderComplete)
-		hallOrders[floor][1] = (Orders[floor][elevio.BT_HallDown] == OrderConfirmed) || (Orders[floor][elevio.BT_HallDown] == OrderComplete)
-	}
-	return hallOrders
-}
-
-func setOrderLights(myWorldView WorldView, myNodeID int) {
-	for floor := 0; floor < config.NumFloors; floor++ {
-		for button := 0; button < config.NumElevatorButtons; button++ {
-			var buttonValue int
-			if button == elevio.BT_Cab {
-				buttonValue = 2 + myNodeID
-			} else {
-				buttonValue = button
-			}
-			orderState := myWorldView.Orders[myNodeID][floor][buttonValue]
-			buttonType := elevio.ButtonType(button)
-			switch orderState {
-			case OrderConfirmed:
-				elevio.SetButtonLamp(buttonType, floor, true)
-			case OrderIdle:
-				elevio.SetButtonLamp(buttonType, floor, false)
-			case OrderPending:
-				continue
-			case OrderComplete:
-				continue
-			}
+func mostAdvancedOrderState(peers []OrderState) OrderState {
+	var highestOrderState OrderState
+	for _, p := range peers {
+		if p > highestOrderState {
+			highestOrderState = p
 		}
+	}
+	return highestOrderState
+}
+
+func deriveConsensusMode(peers peers.PeerUpdate) ConsensusMode {
+	if len(peers.Peers) > 1 {
+		return Networked
+	} else {
+		return Standalone
 	}
 }
 
@@ -183,7 +129,7 @@ func orderTypeFromEvent(order elevio.ButtonEvent, nodeID int) int {
 	return orderType
 }
 
-func alivePeersOrderView(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, alivePeers [config.NumElevators]bool, floor int, button int) []OrderState {
+func collectPeerOrderStates(orders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState, alivePeers [config.NumElevators]bool, floor int, button int) []OrderState {
 	var alivePeersOrderView []OrderState
 	for peerID, alive := range alivePeers {
 		if alive {
@@ -191,24 +137,4 @@ func alivePeersOrderView(orders [config.NumElevators][config.NumFloors][config.N
 		}
 	}
 	return alivePeersOrderView
-}
-
-func (wv *WorldView) tryPromoteIdleOrderToPending(orderFloor int, orderType int) {
-	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderIdle {
-		var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
-		if allPeersUpToDateOrAhead(peersOrderView, OrderIdle, OrderPending) {
-			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderPending
-			return
-		}
-	}
-}
-
-func (wv *WorldView) tryMarkConfirmedOrderCompleted(orderFloor int, orderType int) {
-	if wv.Orders[wv.NodeID][orderFloor][orderType] == OrderConfirmed {
-		var peersOrderView = alivePeersOrderView(wv.Orders, wv.AliveList, orderFloor, orderType)
-		if allPeersUpToDateOrAhead(peersOrderView, OrderConfirmed, OrderIdle) {
-			wv.Orders[wv.NodeID][orderFloor][orderType] = OrderComplete
-			return
-		}
-	}
 }

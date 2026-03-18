@@ -48,6 +48,9 @@ func main() {
 	newOrderC := make(chan ElevatorDriver.Orders, config.Buffer)
 	assignerInputC := make(chan WorldView.WorldView, config.Buffer)
 
+	recuestOrderC := make(chan elevio.ButtonEvent, config.Buffer)
+	go elevio.PollButtons(recuestOrderC)
+
 	go WorldView.WorldViewManager(
 		networkRx,
 		networkTx,
@@ -55,6 +58,7 @@ func main() {
 		servedOrderC,
 		assignerInputC,
 		peersRx,
+		recuestOrderC,
 		id)
 
 	go ElevatorDriver.Elevator_fsm(
