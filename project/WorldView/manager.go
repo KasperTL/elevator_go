@@ -5,6 +5,7 @@ import (
 	"project/Network/peers"
 	"project/config"
 	"project/elevio"
+	"strconv"
 	"time"
 )
 
@@ -33,9 +34,17 @@ func WorldViewManager(
 			assignerInputC <- myWorldView
 
 		case peers := <-peersC:
-			myWorldView.setAliveElevators(peers)
+
+			myWorldView.AliveList = getAliveElevatorsFromPeers(peers)
+			for _, lostIDstr := range peers.Lost {
+				lostID, err := strconv.Atoi(lostIDstr)
+				if err != nil {
+					continue
+				}
+				myWorldView.CabOrderRecovery[lostID] = getCabOrdersFromNodeID(myWorldView.Orders, lostID)
+				myWorldView.Orders = markLostIDOrdersIdle(myWorldView.Orders, lostID)
+			}
 			mode = deriveConsensusMode(peers)
-			myWorldView.stashLostNodesCabOrders(peers)
 
 		case peerWorldView := <-networkRx:
 			if !cabOrdersRecovered {
@@ -44,11 +53,14 @@ func WorldViewManager(
 				}
 				cabOrdersRecovered = true
 			}
-			myWorldView.updatePeerStatusInMyWorldView(peerWorldView)
-			myWorldView.updateOrders()
+			myWorldView.ElevatorStates[peerWorldView.NodeID] = peerWorldView.ElevatorStates[peerWorldView.NodeID]
+			myWorldView.AliveList[peerWorldView.NodeID] = peerWorldView.AliveList[peerWorldView.NodeID]
+			myWorldView.Orders[peerWorldView.NodeID] = peerWorldView.Orders[peerWorldView.NodeID]
+
+			myWorldView.Orders = updatedOrders(myWorldView)
 			setOrderLights(myWorldView, myNodeID)
 
-		case myNewElevatorState := <- localElevatorStateC:
+		case myNewElevatorState := <-localElevatorStateC:
 			myWorldView.ElevatorStates[myNodeID] = myNewElevatorState
 
 		case requestEvent := <-requestOrderCh:
@@ -57,7 +69,7 @@ func WorldViewManager(
 
 			switch mode {
 			case Networked:
-				myWorldView.tryPromoteIdleOrderToPending(orderFloor, orderType)
+				myWorldView.Orders[myNodeID][orderFloor][orderType] = tryPromoteIdleOrderToPending(myWorldView, orderFloor, orderType)
 
 			case Standalone:
 				myWorldView.Orders[myNodeID][orderFloor][orderType] = OrderConfirmed
@@ -70,7 +82,7 @@ func WorldViewManager(
 
 			switch mode {
 			case Networked:
-				myWorldView.tryMarkConfirmedOrderCompleted(orderFloor, orderType)
+				myWorldView.Orders[myNodeID][orderFloor][orderType] = tryMarkConfirmedOrderCompleted(myWorldView, orderFloor, orderType)
 
 			case Standalone:
 				myWorldView.Orders[myNodeID][orderFloor][orderType] = OrderIdle
