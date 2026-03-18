@@ -10,7 +10,7 @@ The elevator project, according to the [specification](https://github.com/TTK414
 
 The code is written in Go language to communicate between the network and modules. The network is peer-to-peer and uses UDP for node connection. The system consists of modules Assigner, ElevatorDriver, Network, WorldView.
 
-## OrderDispatcher
+## [OrderDispatcher](https://github.com/KasperTL/elevator_go/tree/main/project/OrderDispatcher)
 
 This module assigns orders using the [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) (reassigning all requests) provided. 
 
