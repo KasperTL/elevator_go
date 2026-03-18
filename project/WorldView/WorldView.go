@@ -55,7 +55,7 @@ func tryMarkConfirmedOrderCompleted(wv WorldView, orderFloor int, orderType int)
 }
 
 func updatedOrders(wv WorldView) [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState  {
-	var updateOrders [config.NumElevators][config.NumFloors][config.NumOrderTypes]OrderState 
+	updateOrders := wv.Orders
 	for floor := 0; floor < config.NumFloors; floor++ {
 		for button := 0; button < config.NumOrderTypes; button++ {
 			peersOrderView := collectPeerOrderStates(wv.Orders, wv.AliveList, floor, button)
