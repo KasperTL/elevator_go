@@ -107,7 +107,7 @@ func mostAdvancedOrderState(peers []OrderState) OrderState {
 }
 
 func deriveConsensusMode(peers peers.PeerUpdate) ConsensusMode {
-	if len(peers.Peers) > 1 {
+	if len(peers.Peers) > 0 {
 		return Networked
 	} else {
 		return Standalone
