@@ -65,9 +65,43 @@ Sets button light states based on current order states.
 
 ## Cab Orders
 
-Cab orders are handled differently form hall orders. Sicne a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '2+ nodeID'
+Cab orders are handled differently form hall orders. Since a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '2+ nodeID'
+
+### Fault Tolerance for Cab Orders
+If an elevator disconnects, its cab orders are saved in `CabOrderRecovery` by the remaining elevators on the network. 
+When the elevator reconnects, it reads back its saved cab orders from the first peer WorldView it receives, restoring any cab orders that were pending when it disconnected.
 
 # How to run
+
+### 1. Start the Elevator Server
+On the machine connected to the physical elevator, run:
+```
+elevatorserver
+```
+This starts the TCP server on port 15657.
+
+### 2. Clone the repository
+```
+git clone <repository-url>
+cd elevator_go/project
+
+### 3. Run the elevator program
+```
+go run main.go -id=<elevator_id> -port=<port>
+```
+
+For example, to run elevator 0 on port 15657:
+```
+go run main.go -id=0 -port=15657
+```
+
+Repeat steps 2 and 3 on each machine, using a unique `-id` for each elevator (0, 1, or 2).
+
+### Notes
+- Each elevator must have a unique id (0, 1 or 2)
+- Default port is 15657, default id is 0
+- All elevators must be on the same network to communicate
+
 
 
 
