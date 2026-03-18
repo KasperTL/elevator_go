@@ -65,7 +65,7 @@ Sets button light states based on current order states.
 
 ## Cab Orders
 
-Cab orders are handled differently form hall orders. Sicne a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '[2+ nodeID]'
+Cab orders are handled differently form hall orders. Sicne a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '2+ nodeID'
 
 # How to run
 
