@@ -50,9 +50,13 @@ func WorldViewManager(
 			mode = deriveConsensusMode(peers)
 
 		case peerWorldView := <-networkRx:
+			//In standalone mode, we ignore our own networkRX messages, to ensure consistent behaviour with netimpair.
 			if mode == Standalone {
 				continue
 			}
+
+			// Recover cab orders from peers only once after reinitialization.
+			// This ensures that lost cab orders are restored when the node rejoins the network after a crash.
 			if !cabOrdersRecovered {
 				for floor := range config.NumFloors {
 					myWorldView.Orders[myNodeID][floor][myNodeID+2] = peerWorldView.CabOrderRecovery[myNodeID][floor]
