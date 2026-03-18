@@ -144,3 +144,20 @@ func handleDoorClosing(
 	enterIdle(elevator, elevatorMotorTimer)
 
 }
+
+func handleObstruction(
+	elevator *Elevator,
+	obstruction bool,
+	openDoorC chan<- bool) {
+	switch elevator.Behaviour {
+	case EB_Idle:
+		if obstruction {
+			openDoorC <- true
+		}
+	case EB_Moving:
+
+	case EB_DoorOpen:
+		openDoorC <- true
+	}
+	elevator.Obstruction = obstruction
+}
