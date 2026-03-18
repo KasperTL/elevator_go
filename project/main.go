@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"project/ElevatorDriver"
 	"project/Network/bcast"
 	"project/Network/peers"
@@ -25,6 +26,9 @@ func main() {
 
 	elevio.Init("localhost:"+strconv.Itoa(Port), config.NumFloors)
 	localElevator := ElevatorDriver.InitializeElevator()
+
+	fmt.Println("Elevator initialized with id", id, "on port", Port)
+	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
 
 	peersRx := make(chan peers.PeerUpdate, config.Buffer)
 	peersTx := make(chan bool, config.Buffer)
