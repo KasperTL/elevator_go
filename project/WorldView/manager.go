@@ -36,6 +36,7 @@ func WorldViewManager(
 		case peers := <-peersC:
 
 			myWorldView.AliveList = getAliveElevatorsFromPeers(peers)
+			myWorldView.AliveList[myNodeID] = true
 			for _, lostIDstr := range peers.Lost {
 				lostID, err := strconv.Atoi(lostIDstr)
 				if err != nil {
