@@ -82,13 +82,13 @@ In the terminal run:
 ```
 This starts the simulator on port <port>
 
-### 2. Clone the repository
+### 3. Clone the repository
 ```
 git clone <repository-url>
 cd elevator_go/project
 ```
 
-### 3. Run the elevator program
+### 4. Run the elevator program
 ```
 go run main.go -id=<elevator_id> -port=<port>
 ```
