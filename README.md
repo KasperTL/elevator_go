@@ -8,25 +8,26 @@ The elevator project, according to the [specification](https://github.com/TTK414
 
 # Design
 
-The code is written in Go language to communicate between the network and modules. The network is peer-to-peer and uses UDP for node connection. The system consists of modules Assigner, ElevatorDriver, Network, WorldView.
+The code is written in Go language. The network is peer-to-peer and uses UDP for communication. The system consists of the following modules OrderDispatcher, ElevatorDriver, Network, WorldView.
 
 ## [OrderDispatcher](https://github.com/KasperTL/elevator_go/tree/main/project/OrderDispatcher)
 
-This module assigns orders using the [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) (reassigning all requests) provided. 
+This module assigns orders to the local elevator using the [cost function](https://github.com/TTK4145/Project-resources/tree/master/cost_fns#alternative-2-reassigning-all-requests) (reassigning all requests) provided. 
 
 ### dispatcher.go
 The main assignment logic. On every update from WorldView it:
 - Builds an input for the HRA executable containing:
   - All confirmed hall orders
-  - The current state of every alive elevator (floor, direction, behaviour, cab orders)
+  - The current state of every alive elevator
+- Outputs orders for the local elevator
 
 ## [ElevatorDriver](https://github.com/KasperTL/elevator_go/tree/main/project/ElevatorDriver)
 
-This module handles controls the pyhsical elevators by taking orders as input and drives the elevators to serve them. It also send back state updates for complete orders to the rest of the system
+This module handles controls the pyhsical elevators by taking orders as input and drives the elevators to serve them. It also send back state updates and complete orders to the rest of the system
 
 ## [Network](https://github.com/KasperTL/elevator_go/tree/main/project/Network)
 
-This module handles the communication between the elevators via worldview. This was taken from [project resources](https://github.com/TTK4145/Network-go) provided.
+This module handles the broadcasting of the worldview to all nodes and the peer tracking. This was taken from [project resources](https://github.com/TTK4145/Network-go) provided.
 
 ## [WorldView](https://github.com/KasperTL/elevator_go/tree/main/project/WorldView)
 
@@ -63,15 +64,7 @@ The main event loop for worldview.
 ### lights.go
 Sets button light states based on current order states.
 
-## Cab Orders
-
-Cab orders are handled differently form hall orders. Since a cab order is specific to one elevator, it does not need to be assigned by HRA. Instead it is stored in local elevator's order using the type '2+ nodeID'
-
-### Fault Tolerance for Cab Orders
-If an elevator disconnects, its cab orders are saved in `CabOrderRecovery` by the remaining elevators on the network. 
-When the elevator reconnects, it reads back its saved cab orders from the first peer WorldView it receives, restoring any cab orders that were pending when it disconnected.
-
-# How to run
+# How to run 
 
 ### 1. Start the Elevator Server
 On the machine connected to the physical elevator, run:
@@ -79,6 +72,15 @@ On the machine connected to the physical elevator, run:
 elevatorserver
 ```
 This starts the TCP server on port 15657.
+
+### 2. Start the Elevator simulator
+Download the [simulator](https://github.com/TTK4145/Simulator-v2)
+
+In the terminal run:
+```
+./SimElevatorServer -port<port> 
+```
+This starts the simulator on port <port>
 
 ### 2. Clone the repository
 ```
