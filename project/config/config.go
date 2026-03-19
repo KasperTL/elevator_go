@@ -18,4 +18,5 @@ const (
 	DoorOpenDuration  = 3 * time.Second
 	ElevatorMotorTime = 4 * time.Second
 	HeartbeatTime     = 15 * time.Millisecond
+	RecoveryTicker    = 1 * time.Second 
 )

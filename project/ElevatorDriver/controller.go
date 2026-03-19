@@ -22,6 +22,9 @@ func ElevatorController(
 	elevatorMotorTimer := time.NewTimer(config.ElevatorMotorTime)
 	elevatorMotorTimer.Stop()
 
+	recoveryTicker := time.NewTicker(config.RecoveryTicker)
+	recoveryTicker.Stop()
+
 	var orders Orders
 
 	go elevatorDoorController(openDoorC, doorObstructedc, doorClosingc)
@@ -31,6 +34,7 @@ func ElevatorController(
 		select {
 		case floor := <-newFloorC:
 			handleFloorArrival(&elevator, orders, openDoorC, deliveredOrderC, elevatorMotorTimer, floor)
+			recoveryTicker.Stop()
 			elevator.MotorStop = false
 			updatedElevatorStateC <- elevator
 
@@ -44,12 +48,15 @@ func ElevatorController(
 		case <-elevatorMotorTimer.C:
 			fmt.Println("Gets motorstop")
 			elevator.MotorStop = true
+			recoveryTicker.Reset(config.RecoveryTicker)
 			updatedElevatorStateC <- elevator
 
 		case obstruction := <-doorObstructedc:
 			handleObstruction(&elevator, obstruction, openDoorC)
 			updatedElevatorStateC <- elevator
 
+		case <-recoveryTicker.C:
+			elevio.SetMotorDirection(elevator.Direction.toMD())
 		}
 	}
 }
