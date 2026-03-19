@@ -14,7 +14,7 @@ func WorldViewManager(
 	networkTx chan<- WorldView,
 	localElevatorStateC <-chan ElevatorDriver.Elevator,
 	servedOrderC <-chan elevio.ButtonEvent,
-	assignerInputC chan<- WorldView,
+	dispatcherInputC chan<- WorldView,
 	peersC <-chan peers.PeerUpdate,
 	requestOrderCh <-chan elevio.ButtonEvent,
 	myNodeID int,
@@ -31,7 +31,7 @@ func WorldViewManager(
 		select {
 		case <-heartbeat.C:
 			networkTx <- myWorldView
-			assignerInputC <- myWorldView
+			dispatcherInputC <- myWorldView
 
 		case peers := <-peersC:
 

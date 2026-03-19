@@ -1,6 +1,7 @@
 package ElevatorDriver
 
 import (
+	"project/config"
 	"project/elevio"
 )
 
@@ -30,6 +31,12 @@ type Elevator struct {
 func InitializeElevator() Elevator {
 	elevio.SetDoorOpenLamp(false)
 	var elevatorFloor int
+
+	for floor := 0; floor < config.NumFloors; floor++ {
+		for button := elevio.BT_HallUp; button <= elevio.BT_Cab; button++ {
+			elevio.SetButtonLamp(elevio.ButtonType(button), floor, false)
+		}
+	}
 	if elevio.GetFloor() != -1 {
 		elevatorFloor = elevio.GetFloor()
 

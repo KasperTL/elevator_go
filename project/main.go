@@ -31,7 +31,6 @@ func main() {
 
 	fmt.Println("Elevator initialized with id", id, "on port", Port)
 	fmt.Println("System has", config.NumFloors, "floors and", config.NumElevators, "elevators")
-	
 
 	peersRx := make(chan peers.PeerUpdate, config.Buffer)
 	peersTx := make(chan bool, config.Buffer)
@@ -46,7 +45,7 @@ func main() {
 	localElevatorStateC := make(chan ElevatorDriver.Elevator, config.Buffer)
 	servedOrderC := make(chan elevio.ButtonEvent, config.Buffer)
 	newOrderC := make(chan ElevatorDriver.Orders, config.Buffer)
-	assignerInputC := make(chan WorldView.WorldView, config.Buffer)
+	dispatcherInputC := make(chan WorldView.WorldView, config.Buffer)
 
 	recuestOrderC := make(chan elevio.ButtonEvent, config.Buffer)
 	go elevio.PollButtons(recuestOrderC)
@@ -56,7 +55,7 @@ func main() {
 		networkTx,
 		localElevatorStateC,
 		servedOrderC,
-		assignerInputC,
+		dispatcherInputC,
 		peersRx,
 		recuestOrderC,
 		id)
@@ -68,7 +67,7 @@ func main() {
 		localElevator)
 
 	go OrderDispatcher.AssignLocalOrdersFromWorldView(
-		assignerInputC,
+		dispatcherInputC,
 		newOrderC,
 		id)
 
