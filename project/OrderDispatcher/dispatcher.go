@@ -62,7 +62,6 @@ func CalculateOptimalOrders(wv WorldView.WorldView, nodeID int) ElevatorDriver.O
 				CabRequests: cabOrders,
 			}
 		}
-
 	}
 
 	if len(stateMap) == 0 {
@@ -100,7 +99,6 @@ func AssignLocalOrdersFromWorldView(
 ) {
 	for wv := range incomingC {
 		assignedOrders := CalculateOptimalOrders(wv, myNodeId)
-
 		assignedOrdersC <- assignedOrders
 	}
 }
